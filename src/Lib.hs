@@ -39,14 +39,19 @@ march start direction = runST do
         | isNaN a = b
         | isNaN b = a
         | otherwise = min a b -- if both are NaN, then pick either
+      minimum_ = foldr1 minnonan
   cur <- new start
   com <- new $ pure 0 -- Kahan sum compensator
-  sig <- new $ signum <$> direction
+  let sig = signum <$> direction
   fix \this -> do
+    -- mechanism:
+    -- using the parametric equation of the line segment
+    -- find the closest intersection with the grid -> get 'time' value
+    -- then use the 'time' to get the coordinates of the intersection
     let (!) = index
-        t cur' sig' i =
+        t cur' i =
           -- solve for time to next intersection
-          let s = fi (floor $ cur' ! i) + sig' ! i
+          let s = fi (floor $ cur' ! i) + sig ! i
            in (s - cur' ! i) / direction ! i
         add c x y =
           -- Kahan's compensated sum (x += y)
@@ -55,15 +60,12 @@ march start direction = runST do
               c' = (s - x) - y'
            in (s, c')
     com' <- read com
-    let vadd v w = tabulate @f \i ->
-          -- elementwise compensated vector addition
-          add (com' ! i) (v ! i) (w ! i)
-    tim <- do
-      cur' <- read cur
-      sig' <- read sig
-      pure $ foldr1 minnonan $ tabulate @f (t cur' sig')
     cur' <- read cur
-    let s = vadd cur' $ direction <&> (* tim)
+    let tim = minimum_ $ tabulate @f $ t cur'
+        vadd v w = tabulate @f \i ->
+          -- elementwise error-compensated vector addition
+          add (com' ! i) (v ! i) (w ! i)
+        s = vadd cur' $ direction <&> (* tim)
         newcur = fst <$> s
         newcom = snd <$> s
     write cur newcur
