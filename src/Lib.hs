@@ -42,7 +42,7 @@ march start direction = runST do
       minimum_ = foldr1 minnonan
   cur <- new start
   com <- new $ pure 0 -- Kahan sum compensator
-  let sig = signum <$> direction
+  let sig = floor . signum <$> direction
   fix \this -> do
     -- mechanism:
     -- using the parametric equation of the line segment
@@ -51,8 +51,8 @@ march start direction = runST do
     let (!) = index
         t cur' i =
           -- solve for time to next intersection in dimension i
-          let s = fi (floor $ cur' ! i) + sig ! i
-           in (s - cur' ! i) / direction ! i
+          let s = fi (truncate (cur' ! i) + sig ! i) - cur' ! i
+           in s / direction ! i
         add c x y =
           -- Kahan's compensated sum (x += y)
           let y' = y - c
