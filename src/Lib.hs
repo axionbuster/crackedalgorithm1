@@ -71,3 +71,4 @@ march start direction = runST do
     write cur newcur
     write com newcom
     ((tim, newcur) :) <$> this
+{-# INLINEABLE march #-}
