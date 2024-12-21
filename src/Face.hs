@@ -7,8 +7,8 @@ import Linear hiding (ei, ej)
 
 -- | apparently this routine samples some points on the face of a cube
 -- to test for collisions, idk
-facepoints :: V3 Int -> V3 Int -> V3 Int -> [V3 Int]
-facepoints bounding cube sig =
+facepoints :: V3 Int -> V3 Int -> [V3 Int]
+facepoints cube sig =
   let (!) = index
       rule ::
         -- dimension 0
@@ -29,7 +29,7 @@ facepoints bounding cube sig =
              [ let a = if i >= cube ! r then cube ! r else i
                    b = if j >= cube ! q then cube ! q else j
                    c = if sig ! p < 0 then 0 else cube ! p
-                in h (V3 a b c) + bounding
+                in h do V3 a b c
               | (i, j) <- ps
               ]
       -- this thing is a total mystery to me
