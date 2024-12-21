@@ -11,19 +11,9 @@ import Linear.V3
 facepoints :: V3 Int -> V3 Int -> [V3 Int]
 facepoints cube sig =
   let (!) = index
-      rule ::
-        -- dimension 0
-        Rep V3 ->
-        -- dimension 1
-        Rep V3 ->
-        -- dimension 2
-        Rep V3 ->
-        -- points to sample
-        [(Int, Int)] ->
-        -- permutation
-        (V3 Int -> V3 Int) ->
-        -- the points
-        [V3 Int]
+      -- p, q, r: dimensions
+      -- ps: list of points to sample (?)
+      -- h: permutation of a V3
       rule p q r ps h
         | sig ! p == 0 = []
         | otherwise =
