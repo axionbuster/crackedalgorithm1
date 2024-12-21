@@ -22,6 +22,7 @@ description:         Please see the README on GitHub at <https://github.com/gith
 dependencies:
 - adjunctions
 - base
+- lens
 - linear
 
 language:   GHC2021
@@ -29,6 +30,8 @@ language:   GHC2021
 default-extensions:
 - BlockArguments
 - ScopedTypeVariables
+- MultiWayIf
+- ViewPatterns
 
 ghc-options:
 - -Wall

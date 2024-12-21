@@ -36,10 +36,13 @@ library
   default-extensions:
       BlockArguments
       ScopedTypeVariables
+      MultiWayIf
+      ViewPatterns
   ghc-options: -Wall -Wcompat -Widentities -Wincomplete-record-updates -Wincomplete-uni-patterns -Wmissing-export-lists -Wmissing-home-modules -Wpartial-fields -Wredundant-constraints
   build-depends:
       adjunctions
     , base
+    , lens
     , linear
   default-language: GHC2021
 
@@ -54,11 +57,14 @@ executable crackedalgorithm1-exe
   default-extensions:
       BlockArguments
       ScopedTypeVariables
+      MultiWayIf
+      ViewPatterns
   ghc-options: -Wall -Wcompat -Widentities -Wincomplete-record-updates -Wincomplete-uni-patterns -Wmissing-export-lists -Wmissing-home-modules -Wpartial-fields -Wredundant-constraints -threaded -rtsopts -with-rtsopts=-N
   build-depends:
       adjunctions
     , base
     , crackedalgorithm1
+    , lens
     , linear
   default-language: GHC2021
 
@@ -74,10 +80,13 @@ test-suite crackedalgorithm1-test
   default-extensions:
       BlockArguments
       ScopedTypeVariables
+      MultiWayIf
+      ViewPatterns
   ghc-options: -Wall -Wcompat -Widentities -Wincomplete-record-updates -Wincomplete-uni-patterns -Wmissing-export-lists -Wmissing-home-modules -Wpartial-fields -Wredundant-constraints -threaded -rtsopts -with-rtsopts=-N
   build-depends:
       adjunctions
     , base
     , crackedalgorithm1
+    , lens
     , linear
   default-language: GHC2021
