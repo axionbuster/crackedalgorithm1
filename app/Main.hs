@@ -28,8 +28,4 @@ main = do
         pure (defa, defb, points)
   printf " time  ... point\n"
   take n (march a b) & mapM_ \(t, V2 x y) ->
-    printf
-      "%.4f ... V2 %.4f %.4f\n"
-      t
-      x
-      y
+    printf "%.4f ... V2 %.4f %.4f\n" t x y
