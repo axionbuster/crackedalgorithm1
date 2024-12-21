@@ -45,6 +45,7 @@ facepoints cube sig =
           rule ez ex ey p2 h2
         ]
 
+-- | predict the number of points sampled by 'facepoints'
 dbgcountfacepoints :: V3 Int -> V3 Int -> Int
 dbgcountfacepoints ((+ pure 1) -> cube) sig =
   let (!) = index
