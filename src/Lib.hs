@@ -11,6 +11,8 @@ import Prelude hiding (read)
 -- | march along a line segment, finding all intersections
 -- with grid points
 --
+-- the starting point is NOT included in the output
+--
 -- a compensated sum is used to reduce floating point error
 --
 -- the returned list being infinite, it is recommended to
