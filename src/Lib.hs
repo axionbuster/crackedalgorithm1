@@ -41,6 +41,9 @@ march start direction = runST do
         | otherwise = min a b -- if both are NaN, then pick either
       minimum_ = foldr1 minnonan
       sig = floor . signum <$> direction
+      func 1 = floor
+      func (-1) = ceiling
+      func _ = floor -- direction is zero, so it doesn't matter
   cur <- new start
   com <- new $ pure 0 -- Kahan sum compensator
   fix \this -> do
@@ -51,8 +54,9 @@ march start direction = runST do
     let (!) = index
         t cur' i =
           -- solve for time to next intersection in dimension i
-          let s = fi (truncate (cur' ! i) + sig ! i) - cur' ! i
-           in s / direction ! i
+          let s = sig ! i
+              u = fi (func s (cur' ! i) + s) - cur' ! i
+           in u / direction ! i
         add c x y =
           -- Kahan's compensated sum (x += y)
           let y' = y - c
