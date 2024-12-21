@@ -50,7 +50,7 @@ march start direction = runST do
     -- then use the 'time' to get the coordinates of the intersection
     let (!) = index
         t cur' i =
-          -- solve for time to next intersection
+          -- solve for time to next intersection in dimension i
           let s = fi (floor $ cur' ! i) + sig ! i
            in (s - cur' ! i) / direction ! i
         add c x y =
