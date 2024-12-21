@@ -25,6 +25,7 @@ source-repository head
 
 library
   exposed-modules:
+      Face
       Lib
   other-modules:
       Paths_crackedalgorithm1
@@ -39,6 +40,7 @@ library
   build-depends:
       adjunctions
     , base
+    , linear
   default-language: GHC2021
 
 executable crackedalgorithm1-exe
@@ -77,4 +79,5 @@ test-suite crackedalgorithm1-test
       adjunctions
     , base
     , crackedalgorithm1
+    , linear
   default-language: GHC2021
