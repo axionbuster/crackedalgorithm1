@@ -1,3 +1,4 @@
+-- | march along a line segment, finding all intersections with grid points
 module Lib (march) where
 
 import Control.Monad.Fix
@@ -8,8 +9,6 @@ import Prelude hiding (read)
 
 -- | march along a line segment, finding all intersections
 -- with grid points
---
--- the first point is always the starting point
 --
 -- the returned list being infinite, it is recommended to
 -- use 'take' to limit the number of points to be computed
@@ -24,8 +23,8 @@ march ::
   f a ->
   -- | direction (no need to be normalized)
   f a ->
-  -- | list of points
-  [f a]
+  -- | list of (delta time, point) pairs
+  [(a, f a)]
 march start direction = runST do
   let fi = fromIntegral :: Int -> a
       new = newSTRef
@@ -34,7 +33,7 @@ march start direction = runST do
       minnonan a b
         | isNaN a = b
         | isNaN b = a
-        | otherwise = min a b -- if both are NaN, then pick any
+        | otherwise = min a b -- if both are NaN, then pick either
   cur <- new start
   sig <- new $ signum <$> direction
   fix \this -> do
@@ -46,6 +45,6 @@ march start direction = runST do
       cur' <- read cur
       sig' <- read sig
       pure $ foldr1 minnonan $ tabulate @f (t cur' sig')
-    cur' <- read cur
     modify cur (liftA2 (+) $ (tim *) `fmap` direction)
-    (cur' :) <$> this
+    cur' <- read cur
+    ((tim, cur') :) <$> this

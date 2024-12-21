@@ -39,10 +39,6 @@ library
   build-depends:
       adjunctions
     , base
-    , containers
-    , lens
-    , linear
-    , transformers
   default-language: GHC2021
 
 executable crackedalgorithm1-exe
@@ -60,11 +56,8 @@ executable crackedalgorithm1-exe
   build-depends:
       adjunctions
     , base
-    , containers
     , crackedalgorithm1
-    , lens
     , linear
-    , transformers
   default-language: GHC2021
 
 test-suite crackedalgorithm1-test
@@ -83,9 +76,5 @@ test-suite crackedalgorithm1-test
   build-depends:
       adjunctions
     , base
-    , containers
     , crackedalgorithm1
-    , lens
-    , linear
-    , transformers
   default-language: GHC2021

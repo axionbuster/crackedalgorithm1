@@ -22,10 +22,6 @@ description:         Please see the README on GitHub at <https://github.com/gith
 dependencies:
 - adjunctions
 - base
-- containers
-- lens
-- linear
-- transformers
 
 language:   GHC2021
 
@@ -57,6 +53,7 @@ executables:
     - -with-rtsopts=-N
     dependencies:
     - crackedalgorithm1
+    - linear
 
 tests:
   crackedalgorithm1-test:
