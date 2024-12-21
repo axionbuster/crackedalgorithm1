@@ -40,9 +40,9 @@ march start direction = runST do
         | isNaN b = a
         | otherwise = min a b -- if both are NaN, then pick either
       minimum_ = foldr1 minnonan
+      sig = floor . signum <$> direction
   cur <- new start
   com <- new $ pure 0 -- Kahan sum compensator
-  let sig = floor . signum <$> direction
   fix \this -> do
     -- mechanism:
     -- using the parametric equation of the line segment
