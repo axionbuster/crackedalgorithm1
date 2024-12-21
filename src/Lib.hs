@@ -3,12 +3,15 @@ module Lib (march) where
 
 import Control.Monad.Fix
 import Control.Monad.ST.Lazy
+import Data.Functor
 import Data.Functor.Rep
 import Data.STRef.Lazy
 import Prelude hiding (read)
 
 -- | march along a line segment, finding all intersections
 -- with grid points
+--
+-- a compensated sum is used to reduce floating point error
 --
 -- the returned list being infinite, it is recommended to
 -- use 'take' to limit the number of points to be computed
@@ -29,22 +32,38 @@ march start direction = runST do
   let fi = fromIntegral :: Int -> a
       new = newSTRef
       read = readSTRef
-      modify = modifySTRef
+      write = writeSTRef
       minnonan a b
         | isNaN a = b
         | isNaN b = a
         | otherwise = min a b -- if both are NaN, then pick either
   cur <- new start
+  com <- new $ pure 0 -- Kahan sum compensator
   sig <- new $ signum <$> direction
   fix \this -> do
-    let t cur' sig' i =
-          let nex' = tabulate @f \j ->
-                fi (floor $ cur' `index` j) + sig' `index` j
-           in (index nex' i - index cur' i) / index direction i
+    let (!) = index
+        t cur' sig' i =
+          -- solve for time to next intersection
+          let s = fi (floor $ cur' ! i) + sig' ! i
+           in (s - cur' ! i) / direction ! i
+        add c x y =
+          -- Kahan's compensated sum (x += y)
+          let y' = y - c
+              s = x + y'
+              c' = (s - x) - y'
+           in (s, c')
+    com' <- read com
+    let vadd v w = tabulate @f \i ->
+          -- elementwise compensated vector addition
+          add (com' ! i) (v ! i) (w ! i)
     tim <- do
       cur' <- read cur
       sig' <- read sig
       pure $ foldr1 minnonan $ tabulate @f (t cur' sig')
-    modify cur (liftA2 (+) $ (tim *) `fmap` direction)
     cur' <- read cur
-    ((tim, cur') :) <$> this
+    let s = vadd cur' $ direction <&> (* tim)
+        newcur = fst <$> s
+        newcom = snd <$> s
+    write cur newcur
+    write com newcom
+    ((tim, newcur) :) <$> this
