@@ -4,7 +4,6 @@ module Face (facepoints) where
 import Data.Functor.Rep
 import Data.Ix (range)
 import Linear hiding (ei, ej)
-import Prelude hiding (read)
 
 -- | apparently this routine samples some points on the face of a cube
 -- to test for collisions, idk
