@@ -13,26 +13,24 @@ import Text.Printf
 facepoints :: V3 Int -> V3 Int -> [V3 Int]
 facepoints coid sig =
   let (!) = index
+      -- enumerate points on the faces of the cuboid
       -- p, q, r: dimensions
-      -- ps: list of points to sample (?)
+      -- ps: list of points to sample
       -- h: permutation of a V3
       rule p q r ps h
         | sig ! p == 0 = []
         | otherwise =
-            [ let a = if i >= coid ! r then coid ! r else i
-                  b = if j >= coid ! q then coid ! q else j
+            [ let a = min i (coid ! r)
+                  b = min j (coid ! q)
                   c = if sig ! p < 0 then 0 else coid ! p
                in h do V3 a b c
             | (i, j) <- ps
             ]
-      -- this thing is a total mystery to me
-      st i -- compute starting / ending points for the face (?) in dimension i
+      -- compute ranges for the points to sample
+      st i
         | sig ! i < 0 = (1, 0)
         | sig ! i > 0 = (0, 1)
         | otherwise = (0, 0)
-      h0 (V3 a b c) = V3 c b a
-      h1 (V3 a b c) = V3 b c a
-      h2 (V3 a b c) = V3 b a c
       p0 =
         let (sj, ej) = st ey
             (si, ei) = st ez
@@ -41,7 +39,12 @@ facepoints coid sig =
         let (sj, ej) = st ez
          in range ((sj, 0), (coid ! ez - ej, coid ! ex))
       p2 = range ((0, 0), (coid ! ey, coid ! ex))
-   in concat
+      -- mirror or rotate the coordinate system
+      h0 (V3 a b c) = V3 c b a
+      h1 (V3 a b c) = V3 b c a
+      h2 (V3 a b c) = V3 b a c
+   in -- compute points for faces perpendicular to the respective axes
+      concat
         [ rule ex ey ez p0 h0,
           rule ey ex ez p1 h1,
           rule ez ex ey p2 h2
