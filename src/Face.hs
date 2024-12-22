@@ -57,13 +57,13 @@ dbgdesmos vs = "[" ++ intercalate "," (f <$> vs) ++ "]"
 dbgcountfacepoints :: V3 Int -> V3 Int -> Int
 dbgcountfacepoints ((+ pure 1) -> coid) sig =
   let (!) = index
-      bnz c a = if c then a else 0
+      c ? a = if c then a else 0
       allnz3 = all (/= 0)
       allnz2 = all (/= 0)
       V3 cx cy cz = coid
-   in bnz (sig ! ex /= 0) (cy * cz)
-        + bnz (sig ! ey /= 0) (cz * cx)
-        + bnz (sig ! ez /= 0) (cx * cy)
+   in (sig ! ex /= 0) ? (cy * cz)
+        + (sig ! ey /= 0) ? (cz * cx)
+        + (sig ! ez /= 0) ? (cx * cy)
         + if
           | allnz3 sig -> 1 - cx - cy - cz
           | allnz2 $ sig ^. _xy -> -cz
