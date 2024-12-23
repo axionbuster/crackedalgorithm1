@@ -14,8 +14,6 @@ import Control.Monad.Zip
 import Linear hiding (trace)
 import Shape
 
-import Debug.Trace
-
 -- | a box in 3D space, located either relatively or absolutely
 data Box a = Box
   { -- | the dimensions of the box
@@ -34,6 +32,9 @@ _center :: Lens' (Box a) (V3 a)
 _center = lens center \b c -> b {center = c}
 
 instance Shape Box where
+  -- moving = displacement from t = 0 to t = 1
+  -- 'this' is the box that is moving
+  -- into 'that' box
   hitting moving this that =
     let (V3 x0_ y0_ z0_, V3 x1_ y1_ z1_) = (center this, center this + moving)
         (x0, x1, y0, y1, z0, z1) =
@@ -54,12 +55,16 @@ instance Shape Box where
             (V2 v0 v1 - pure y0) ^/ dy,
             (V2 w0 w1 - pure z0) ^/ dz
           )
+        -- if any NaNs exist, the box is not intersecting
+        -- on some axis
         nonans = all (not . isNaN)
+        -- entering time, each axis, and t = 0
         times0 = V4 tx0 ty0 tz0 0
+        -- exiting time, each axis, and t = 1
         times1 = V4 tx1 ty1 tz1 1
-     in trace
-          do show (V3 tx0 ty0 tz0, V3 tx1 ty1 tz1)
-          do nonans times0 && nonans times1 && maximum times0 < minimum times1
+     in -- it is absurd to have a maximum time less than the minimum time
+        -- on any axis, and in all other cases, the box is intersecting
+        nonans times0 && nonans times1 && maximum times0 < minimum times1
   intersecting this that =
     let lotest = and $ mzipWith (<) (locorner this) (hicorner that)
         hitest = and $ mzipWith (>) (hicorner this) (locorner that)
@@ -75,11 +80,3 @@ locorner (Box d c) = c - d ^/ 2
 
 hicorner :: (Fractional a) => Box a -> V3 a
 hicorner (Box d c) = c + d ^/ 2
-
-dbgbox0 = Box (pure (1 :: Double)) (V3 0.5 0.5 0)
-
-dbgbox1 = Box (pure (1 :: Double)) (V3 2.5 1.5 0.5)
-
-dbgdir0 = V3 (4 :: Double) 0 0
-
-dbgres0 = hitting dbgdir0 dbgbox0 dbgbox1
