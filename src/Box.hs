@@ -11,8 +11,10 @@ where
 
 import Control.Lens
 import Control.Monad.Zip
-import Linear
+import Linear hiding (trace)
 import Shape
+
+import Debug.Trace
 
 -- | a box in 3D space, located either relatively or absolutely
 data Box a = Box
@@ -52,7 +54,12 @@ instance Shape Box where
             (V2 v0 v1 - pure y0) ^/ dy,
             (V2 w0 w1 - pure z0) ^/ dz
           )
-     in maximum [tx0, ty0, tz0, 0] < minimum [tx1, ty1, tz1, 1]
+        nonans = all (not . isNaN)
+        times0 = V4 tx0 ty0 tz0 0
+        times1 = V4 tx1 ty1 tz1 1
+     in trace
+          do show (V3 tx0 ty0 tz0, V3 tx1 ty1 tz1)
+          do nonans times0 && nonans times1 && maximum times0 < minimum times1
   intersecting this that =
     let lotest = and $ mzipWith (<) (locorner this) (hicorner that)
         hitest = and $ mzipWith (>) (hicorner this) (locorner that)
@@ -68,3 +75,11 @@ locorner (Box d c) = c - d ^/ 2
 
 hicorner :: (Fractional a) => Box a -> V3 a
 hicorner (Box d c) = c + d ^/ 2
+
+dbgbox0 = Box (pure (1 :: Double)) (V3 0.5 0.5 0)
+
+dbgbox1 = Box (pure (1 :: Double)) (V3 2.5 1.5 0.5)
+
+dbgdir0 = V3 (4 :: Double) 0 0
+
+dbgres0 = hitting dbgdir0 dbgbox0 dbgbox1

@@ -44,7 +44,7 @@ class Shape s where
 
   -- | check if the first shape will collide into the second shape
   -- if it moves with the given displacement
-  hitting :: (Fractional a, Ord a) => V3 a -> s a -> s a -> Bool
+  hitting :: (Show a, RealFloat a, Ord a) => V3 a -> s a -> s a -> Bool
 
   -- | return the relative starting and ending positions of the shape
   -- respectively
