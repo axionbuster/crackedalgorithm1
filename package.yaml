@@ -24,6 +24,7 @@ dependencies:
 - base
 - lens
 - linear
+- hashable
 
 language:   GHC2021
 
@@ -32,6 +33,8 @@ default-extensions:
 - ScopedTypeVariables
 - MultiWayIf
 - ViewPatterns
+- DerivingStrategies
+- DeriveAnyClass
 
 ghc-options:
 - -Wall
