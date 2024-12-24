@@ -50,6 +50,8 @@ class Shape s where
 
   -- | return the relative starting and ending positions of the shape
   -- respectively
+  --
+  -- relative to model space
   relative :: (Fractional a) => s a -> V2 (V3 a)
 
   -- | translate the shape by the given displacement

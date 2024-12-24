@@ -50,20 +50,21 @@ instance Shape Box where
         d = dimensions this
         (V3 u0 v0 w0, V3 u1 v1 w1) = (lc - d ^/ 2, hc + d ^/ 2)
         (dx, dy, dz) = (x1 - x0, y1 - y0, z1 - z0)
+        -- entering and exiting times for each axis
         (V2 tx0 tx1, V2 ty0 ty1, V2 tz0 tz1) =
           ( (V2 u0 u1 - pure x0) ^/ dx,
             (V2 v0 v1 - pure y0) ^/ dy,
             (V2 w0 w1 - pure z0) ^/ dz
           )
         -- if any NaNs exist, the box is not intersecting
-        -- on some axis
+        -- on some axis, thus the box is not intersecting
         nonans = all (not . isNaN)
         -- entering time, each axis, and t = 0
         times0 = V4 tx0 ty0 tz0 0
         -- exiting time, each axis, and t = 1
         times1 = V4 tx1 ty1 tz1 1
-     in -- it is absurd to have a maximum time less than the minimum time
-        -- on any axis, and in all other cases, the box is intersecting
+     in -- it is absurd to be exiting earlier than entering
+        -- but in all other cases, the box is intersecting
         nonans times0 && nonans times1 && maximum times0 < minimum times1
   intersecting this that =
     let lotest = and $ mzipWith (<) (locorner this) (hicorner that)
@@ -72,11 +73,14 @@ instance Shape Box where
   relative box = V2 (locorner box) (hicorner box)
   translate displacement box = box {center = displacement + center box}
 
+-- | a box with zero dimensions and center
 boxzero :: (Num a) => Box a
 boxzero = Box zero zero
 
+-- | the location of the lower corner of the box
 locorner :: (Fractional a) => Box a -> V3 a
 locorner (Box d c) = c - d ^/ 2
 
+-- | the location of the higher corner of the box
 hicorner :: (Fractional a) => Box a -> V3 a
 hicorner (Box d c) = c + d ^/ 2
