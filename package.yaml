@@ -72,3 +72,4 @@ tests:
     - -with-rtsopts=-N
     dependencies:
     - crackedalgorithm1
+    - hspec

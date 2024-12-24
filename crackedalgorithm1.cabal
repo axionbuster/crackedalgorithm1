@@ -80,6 +80,7 @@ test-suite crackedalgorithm1-test
   type: exitcode-stdio-1.0
   main-is: Spec.hs
   other-modules:
+      BoxSpec
       Paths_crackedalgorithm1
   autogen-modules:
       Paths_crackedalgorithm1
@@ -98,6 +99,7 @@ test-suite crackedalgorithm1-test
     , base
     , crackedalgorithm1
     , hashable
+    , hspec
     , lens
     , linear
   default-language: GHC2021
