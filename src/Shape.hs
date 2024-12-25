@@ -10,14 +10,12 @@ import Linear (V2, V3)
 data Hit a = Hit
   { -- | proportion of move completed in [0, 1]
     hitprop :: a,
+    -- | the point of collision
+    hitwhere :: V3 a,
     -- | normal vector of the surface hit
     --
     -- a signum vector, so each component is either -1, 0, or 1
-    hitnorm :: V3 a,
-    -- | exact meaning and purpose unknown
-    hitcollidedshapexyz :: V3 a,
-    -- | what shape was hit (?)
-    hitcollidedshape :: SomeShape1 a
+    hitnorm :: V3 a
   }
   deriving (Show)
 
@@ -46,7 +44,7 @@ class Shape s where
   -- if it moves with the given displacement
   --
   -- TODO: this should be a method of the 'Maybe' 'Hit' type
-  hitting :: (Show a, RealFloat a) => V3 a -> s a -> s a -> Bool
+  hitting :: (Show a, RealFloat a) => V3 a -> s a -> s a -> Maybe (Hit a)
 
   -- | return the relative starting and ending positions of the shape
   -- respectively

@@ -9,8 +9,9 @@ module Box
   )
 where
 
-import Control.Lens
+import Control.Lens hiding (index)
 import Control.Monad.Zip
+import Data.Functor.Rep
 import Linear hiding (trace)
 import Shape
 
@@ -63,9 +64,30 @@ instance Shape Box where
         times0 = V4 sx0 sy0 sz0 0
         -- exiting time, each axis, and t = 1
         times1 = V4 sx1 sy1 sz1 1
+        -- time of hit
+        t = maximum times0
      in -- it is absurd to be exiting earlier than entering
         -- but in all other cases, the box is intersecting
-        nonans times0 && nonans times1 && maximum times0 < minimum times1
+        if nonans times0 && nonans times1 && t < minimum times1
+          then
+            -- we have a hit!
+            Just
+              Hit
+                { hitprop = t,
+                  hitwhere = center this + t *^ moving,
+                  hitnorm =
+                    let p1m1 x = if x then 1 else (-1)
+                        times0_ = times0 ^. _xyz
+                     in tabulate \i ->
+                          -- if collision in this axis
+                          -- then opposite of the direction of movement
+                          -- that's the normal!
+                          -- or else nothing so 0
+                          if t == times0_ `index` i
+                            then p1m1 $ moving `index` i < 0
+                            else 0
+                }
+          else Nothing
   intersecting this that =
     let lotest = and $ mzipWith (<) (locorner this) (hicorner that)
         hitest = and $ mzipWith (>) (hicorner this) (locorner that)
