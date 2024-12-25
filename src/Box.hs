@@ -45,8 +45,6 @@ instance Shape Box where
         (V3 dx dy dz) = moving
         -- entering and exiting times for each axis
         (V2 tx0 tx1, V2 ty0 ty1, V2 tz0 tz1) =
-          trace
-            do "w,z:" <> show (w0, w1, z0, z1, dz)
             ( (V2 u0 u1 - pure x0) ^/ dx,
               (V2 v0 v1 - pure y0) ^/ dy,
               (V2 w0 w1 - pure z0) ^/ dz
@@ -69,7 +67,7 @@ instance Shape Box where
      in -- it is absurd to be exiting earlier than entering
         -- but in all other cases, the box is intersecting
         nonans times0 && nonans times1 && do
-          trace
+          seq
             do show (times0, times1)
             do maximum times0 < minimum times1
   intersecting this that =
