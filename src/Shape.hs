@@ -42,14 +42,10 @@ class Shape s where
 
   -- | check if the first shape will collide into the second shape
   -- if it moves with the given displacement
-  --
-  -- TODO: this should be a method of the 'Maybe' 'Hit' type
   hitting :: (Show a, RealFloat a) => V3 a -> s a -> s a -> Maybe (Hit a)
 
   -- | return the relative starting and ending positions of the shape
-  -- respectively
-  --
-  -- relative to model space
+  -- respectively (relative to model space)
   relative :: (Fractional a) => s a -> V2 (V3 a)
 
   -- | translate the shape by the given displacement
