@@ -11,7 +11,10 @@ where
 
 import Control.Lens hiding (index)
 import Control.Monad.Zip
+import Data.Foldable
 import Data.Functor.Rep
+import Data.Maybe
+import Data.Ord
 import Linear hiding (trace)
 import Shape
 
@@ -92,7 +95,6 @@ instance Shape Box where
     let lotest = and $ mzipWith (<) (locorner this) (hicorner that)
         hitest = and $ mzipWith (>) (hicorner this) (locorner that)
      in lotest && hitest
-  relative box = V2 (locorner box) (hicorner box)
   translate displacement box = box {center = displacement + center box}
 
 -- | a box with zero dimensions and center
@@ -106,3 +108,39 @@ locorner (Box d c) = c - d ^/ 2
 -- | the location of the higher corner of the box
 hicorner :: (Fractional a) => Box a -> V3 a
 hicorner (Box d c) = c + d ^/ 2
+
+-- | a newtype over a 'Foldable' 'Functor' container of 'Box'es
+newtype ManyBoxes f a = ManyBoxes (f (Box a))
+
+instance (Functor f, Foldable f) => Shape (ManyBoxes f) where
+  -- find the first hitting collision
+  hitting moving (ManyBoxes these) (ManyBoxes those) =
+    let minimum' =
+          Nothing & foldr \x -> \case
+            Nothing -> Just x
+            Just y -> Just if (comparing hitprop) x y == LT then x else y
+        firsthit boxes box =
+          minimum' $
+            mapMaybe (hitting moving box) $
+              toList boxes
+     in minimum' $
+          mapMaybe (firsthit those) $
+            toList these
+
+  -- check if any of the boxes intersect
+  intersecting (ManyBoxes these) (ManyBoxes those) =
+    foldr
+      ( \this r ->
+          foldr
+            do \that s -> intersecting this that || s
+            do False
+            do those
+            || r
+      )
+      do False
+      do these
+
+  -- translate all the boxes
+  translate displacement (ManyBoxes boxes) =
+    ManyBoxes $
+      translate displacement <$> boxes
