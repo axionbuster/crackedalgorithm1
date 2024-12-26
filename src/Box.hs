@@ -98,6 +98,7 @@ instance Shape Box where
         hitest = and $ mzipWith (>) (hicorner this) (locorner that)
      in lotest && hitest
   translate displacement box = box {center = displacement + center box}
+  corners box = V2 (locorner box) (hicorner box)
 
 -- | a box with zero dimensions and center
 boxzero :: (Num a) => Box a
@@ -156,3 +157,10 @@ instance (Functor f, Foldable f) => Shape (ManyBoxes f) where
   translate displacement (ManyBoxes boxes) =
     ManyBoxes $
       translate displacement <$> boxes
+
+  -- find the corners of the smallest bounding box
+  corners (ManyBoxes boxes) =
+    let tropical = liftA2 min
+        low = foldr (tropical . locorner) (pure (1 / 0)) boxes
+        high = foldr (tropical . hicorner) (pure (-1 / 0)) boxes
+     in V2 low high

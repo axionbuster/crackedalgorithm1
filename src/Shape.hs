@@ -46,3 +46,7 @@ class Shape s where
 
   -- | translate the shape by the given displacement
   translate :: (Num a) => V3 a -> s a -> s a
+
+  -- | the locations of the lower and higher corners of the shape
+  -- respectively
+  corners :: (Fractional a, Ord a) => s a -> V2 (V3 a)
