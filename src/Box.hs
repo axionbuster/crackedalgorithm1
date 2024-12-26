@@ -1,11 +1,13 @@
 -- | a simple 3D box
 module Box
   ( Box (..),
+    ManyBoxes (..),
     _dimensions,
     _center,
     boxzero,
     locorner,
     hicorner,
+    mbapply,
   )
 where
 
@@ -112,6 +114,13 @@ hicorner (Box d c) = c + d ^/ 2
 -- | a newtype over a 'Foldable' 'Functor' container of 'Box'es
 newtype ManyBoxes f a = ManyBoxes (f (Box a))
 
+mbapply :: (f (Box a) -> f (Box a)) -> ManyBoxes f a -> ManyBoxes f a
+mbapply f (ManyBoxes x) = ManyBoxes $ f x
+
+-- a design flaw is that ManyBoxes f is not a Functor or Foldable
+-- so downstream code will need to hard-code ManyBoxes
+-- which means that no one can use any other method of detecting collisions
+-- except for this Shape instance for ManyBoxes
 instance (Functor f, Foldable f) => Shape (ManyBoxes f) where
   -- find the first hitting collision
   hitting moving (ManyBoxes these) (ManyBoxes those) =
