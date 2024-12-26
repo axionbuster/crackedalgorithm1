@@ -114,6 +114,9 @@ hicorner (Box d c) = c + d ^/ 2
 -- | a newtype over a 'Foldable' 'Functor' container of 'Box'es
 newtype ManyBoxes f a = ManyBoxes (f (Box a))
 
+-- | apply a function to the boxes
+--
+-- this function is provided because 'ManyBoxes' is not a 'Functor'
 mbapply :: (f (Box a) -> f (Box a)) -> ManyBoxes f a -> ManyBoxes f a
 mbapply f (ManyBoxes x) = ManyBoxes $ f x
 
