@@ -125,9 +125,9 @@ instance (Functor f, Foldable f) => Shape (ManyBoxes f) where
   -- find the first hitting collision
   hitting moving (ManyBoxes these) (ManyBoxes those) =
     let minimum' =
-          Nothing & foldr \x -> \case
-            Nothing -> Just x
-            Just y -> Just if (comparing hitprop) x y == LT then x else y
+          Nothing & foldl' \case
+            Nothing -> Just
+            Just y -> \x -> Just if (comparing hitprop) x y == LT then x else y
         firsthit boxes box =
           minimum' $
             mapMaybe (hitting moving box) $
