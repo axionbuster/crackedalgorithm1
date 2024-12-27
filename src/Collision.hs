@@ -228,9 +228,10 @@ instance (Functor f, Foldable f) => Shape (ManyBoxes f) where
 
   -- find the corners of the smallest bounding box
   corners (ManyBoxes boxes) =
-    let tropical = liftA2 min
-        low = foldr (tropical . locorner) (pure (1 / 0)) boxes
-        high = foldr (tropical . hicorner) (pure (-1 / 0)) boxes
+    let tropical0 = liftA2 min
+        tropical1 = liftA2 max
+        low = foldr (tropical0 . locorner) (pure (1 / 0)) boxes
+        high = foldr (tropical1 . hicorner) (pure (-1 / 0)) boxes
      in V2 low high
 
 instance (Foldable f) => Shape' (ManyBoxes f) where
