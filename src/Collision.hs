@@ -1,7 +1,7 @@
 {-# LANGUAGE MonoLocalBinds #-}
 
--- | a module for defining the @Shape@ typeclass
-module Shape
+-- | collision detection and resolution
+module Collision
   ( Shape (..),
     Shape' (..),
     SomeShape1 (..),

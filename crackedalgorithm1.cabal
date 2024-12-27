@@ -25,9 +25,9 @@ source-repository head
 
 library
   exposed-modules:
+      Collision
       Face
       Lib
-      Shape
   other-modules:
       Paths_crackedalgorithm1
   autogen-modules:
