@@ -15,7 +15,6 @@ import Control.Monad.Zip
 import Data.Foldable
 import Data.Functor.Rep
 import Data.Maybe
-import Data.Ord
 import Linear hiding (trace)
 import Shape
 
@@ -124,17 +123,14 @@ instance (Show (f (Box a))) => Show (ManyBoxes f a) where
 instance (Functor f, Foldable f) => Shape (ManyBoxes f) where
   -- find the first hitting collision
   hitting moving (ManyBoxes these) (ManyBoxes those) =
-    let minimum' =
+    let minBy f x y = if f x < f y then x else y
+        minimum' =
           Nothing & foldl' \case
             Nothing -> Just
-            Just y -> \x -> Just if (comparing hitprop) x y == LT then x else y
-        firsthit boxes box =
-          minimum' $
-            mapMaybe (hitting moving box) $
-              toList boxes
-     in minimum' $
-          mapMaybe (firsthit those) $
-            toList these
+            Just x -> \y -> Just $ minBy hitprop x y
+        nearest f = minimum' . mapMaybe f . toList
+        firsthit boxes box = nearest (hitting moving box) boxes
+     in nearest (firsthit those) these
 
   -- check if any of the boxes intersect
   intersecting (ManyBoxes these) (ManyBoxes those) =
