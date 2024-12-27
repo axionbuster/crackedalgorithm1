@@ -20,6 +20,9 @@ data Hit a = Hit
   deriving (Show)
 
 -- | existential 'Shape' type but numeric type is erased
+--
+-- The 'Shape' instance for 'SomeShape1' requires for 'intersecting'
+-- and 'hitting' the two underlying shapes to have the same type
 data SomeShape1 a
   = forall s.
     ( Typeable (s a),
@@ -27,9 +30,20 @@ data SomeShape1 a
       Shape s
     ) =>
     SomeShape1 (s a)
+  deriving (Typeable)
 
 instance Show (SomeShape1 a) where
   show (SomeShape1 s) = show s
+
+instance Shape SomeShape1 where
+  intersecting (SomeShape1 s1) (SomeShape1 s2)
+    | Just s3 <- cast s2 = intersecting s1 s3
+    | otherwise = error "intersecting: type mismatch"
+  hitting v (SomeShape1 s1) (SomeShape1 s2)
+    | Just s3 <- cast s2 = hitting v s1 s3
+    | otherwise = error "hitting: type mismatch"
+  translate v (SomeShape1 s) = SomeShape1 (translate v s)
+  corners (SomeShape1 s) = corners s
 
 -- | cast a 'SomeShape1' to a specific type
 castshape1 :: (Typeable b) => SomeShape1 a -> Maybe b
