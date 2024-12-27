@@ -7,7 +7,6 @@ module Box
     boxzero,
     locorner,
     hicorner,
-    mbapply,
   )
 where
 
@@ -115,11 +114,8 @@ hicorner (Box d c) = c + d ^/ 2
 -- | a newtype over a 'Foldable' 'Functor' container of 'Box'es
 newtype ManyBoxes f a = ManyBoxes (f (Box a))
 
--- | apply a function to the boxes
---
--- this function is provided because 'ManyBoxes' is not a 'Functor'
-mbapply :: (f (Box a) -> f (Box a)) -> ManyBoxes f a -> ManyBoxes f a
-mbapply f (ManyBoxes x) = ManyBoxes $ f x
+instance (Show (f (Box a))) => Show (ManyBoxes f a) where
+  show (ManyBoxes boxes) = show boxes
 
 -- a design flaw is that ManyBoxes f is not a Functor or Foldable
 -- so downstream code will need to hard-code ManyBoxes

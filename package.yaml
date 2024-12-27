@@ -30,12 +30,13 @@ language:   GHC2021
 
 default-extensions:
 - BlockArguments
-- ScopedTypeVariables
-- MultiWayIf
-- ViewPatterns
-- DerivingStrategies
 - DeriveAnyClass
+- DerivingStrategies
 - LambdaCase
+- MultiWayIf
+- ScopedTypeVariables
+- UndecidableInstances
+- ViewPatterns
 
 ghc-options:
 - -Wall

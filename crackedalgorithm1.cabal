@@ -37,12 +37,13 @@ library
       src
   default-extensions:
       BlockArguments
-      ScopedTypeVariables
-      MultiWayIf
-      ViewPatterns
-      DerivingStrategies
       DeriveAnyClass
+      DerivingStrategies
       LambdaCase
+      MultiWayIf
+      ScopedTypeVariables
+      UndecidableInstances
+      ViewPatterns
   ghc-options: -Wall -Wcompat -Widentities -Wincomplete-record-updates -Wincomplete-uni-patterns -Wmissing-export-lists -Wmissing-home-modules -Wpartial-fields -Wredundant-constraints
   build-depends:
       adjunctions
@@ -62,12 +63,13 @@ executable crackedalgorithm1-exe
       app
   default-extensions:
       BlockArguments
-      ScopedTypeVariables
-      MultiWayIf
-      ViewPatterns
-      DerivingStrategies
       DeriveAnyClass
+      DerivingStrategies
       LambdaCase
+      MultiWayIf
+      ScopedTypeVariables
+      UndecidableInstances
+      ViewPatterns
   ghc-options: -Wall -Wcompat -Widentities -Wincomplete-record-updates -Wincomplete-uni-patterns -Wmissing-export-lists -Wmissing-home-modules -Wpartial-fields -Wredundant-constraints -threaded -rtsopts -with-rtsopts=-N
   build-depends:
       adjunctions
@@ -90,12 +92,13 @@ test-suite crackedalgorithm1-test
       test
   default-extensions:
       BlockArguments
-      ScopedTypeVariables
-      MultiWayIf
-      ViewPatterns
-      DerivingStrategies
       DeriveAnyClass
+      DerivingStrategies
       LambdaCase
+      MultiWayIf
+      ScopedTypeVariables
+      UndecidableInstances
+      ViewPatterns
   ghc-options: -Wall -Wcompat -Widentities -Wincomplete-record-updates -Wincomplete-uni-patterns -Wmissing-export-lists -Wmissing-home-modules -Wpartial-fields -Wredundant-constraints -threaded -rtsopts -with-rtsopts=-N
   build-depends:
       adjunctions
