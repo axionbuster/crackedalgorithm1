@@ -11,13 +11,13 @@ main :: IO ()
 main = do
   (a, b, n) <- catch
     do
-      [a0 :: Double, a1, b0, b1, points] <- fmap read <$> getArgs
-      pure (V2 a0 a1, V2 b0 b1, floor points)
+      [a0 :: Double, a1, a2, b0, b1, b2, points] <- fmap read <$> getArgs
+      pure (V3 a0 a1 a2, V3 b0 b1 b2, floor points)
     do
       \(_ :: SomeException) -> do
-        let defa = V2 0.2 0.8
-            defb = V2 0.8 0.2
-            points = 5
+        let defa = V3 0.2 0.8 0.5
+            defb = V3 0.8 0.2 0.5
+            points = 10
         printf
           do
             "problem gettings arguments; using defaults of (start) %s \
@@ -27,5 +27,5 @@ main = do
           do points
         pure (defa, defb, points)
   printf " time  ... point\n"
-  take n (march a b) & mapM_ \(t, V2 x y, blocks) ->
-    printf "%.4f ... V2 %.4f %.4f %s\n" t x y (show blocks)
+  take n (march a b) & mapM_ \(t, V3 x y z, blocks) ->
+    printf "%.4f ... V3 %.4f %.4f %.4f %s\n" t x y z (show blocks)
