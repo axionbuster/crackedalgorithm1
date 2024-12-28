@@ -2,7 +2,7 @@ module Main (main) where
 
 import Control.Exception
 import Data.Function
-import Lib (march)
+import March (march)
 import Linear
 import System.Environment
 import Text.Printf

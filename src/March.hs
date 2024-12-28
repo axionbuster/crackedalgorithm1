@@ -1,5 +1,5 @@
 -- | march along a line segment, finding all intersections with grid points
-module Lib (march) where
+module March (march) where
 
 import Control.Monad.Fix
 import Control.Monad.ST.Lazy
@@ -35,11 +35,11 @@ march start direction = runST do
       new = newSTRef
       read = readSTRef
       write = writeSTRef
-      minnonan a b
-        | isNaN a = b
-        | isNaN b = a
-        | otherwise = min a b -- if both are NaN, then pick either
-      minimum_ = foldr1 minnonan
+      minimum_ = foldr1 \a b ->
+        if
+          | isNaN a -> b
+          | isNaN b -> a
+          | otherwise -> min a b -- if both are NaN, then pick either
       sig = floor . signum <$> direction
       func 1 = floor
       func (-1) = ceiling
@@ -61,7 +61,7 @@ march start direction = runST do
           -- Kahan's compensated sum (x += y)
           let y' = y - c
               s = x + y'
-              c' = (s - x) - y'
+              c' = s - x - y'
            in (s, c')
     com' <- read com
     cur' <- read cur

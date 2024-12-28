@@ -28,7 +28,7 @@ library
       Collision
       Collision2
       Face
-      Lib
+      March
   other-modules:
       Paths_crackedalgorithm1
   autogen-modules:
