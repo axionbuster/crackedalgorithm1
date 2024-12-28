@@ -25,6 +25,7 @@ dependencies:
 - lens
 - linear
 - hashable
+- heftia
 
 language:   GHC2021
 
