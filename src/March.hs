@@ -8,7 +8,9 @@ import Data.Foldable
 import Data.Functor
 import Data.Functor.Rep
 import Data.STRef.Lazy
-import Linear
+import Debug.Trace
+import Linear hiding (trace)
+import Text.Printf
 import Prelude hiding (read)
 
 -- | march along a line segment, finding all intersections
@@ -27,6 +29,7 @@ march ::
     Representable f,
     Rep f ~ E f,
     RealFloat a,
+    PrintfArg a,
     Epsilon a
   ) =>
   -- | starting point
@@ -46,8 +49,9 @@ march start direction = runST do
           | isNaN b -> a
           | otherwise -> min a b -- if both are NaN, then pick either
       sig = floor . signum <$> direction
-      round_ = f <$> sig
+      round_ = g <$> sig
         where
+          g x y = trace (printf "round_ %f -> %d" y (f x y :: Int)) $ f x y
           f (-1) = ceiling
           f 1 = floor
           f _ = floor -- direction is zero, so it doesn't matter
@@ -61,15 +65,14 @@ march start direction = runST do
     let (!) = index
         t cur' i =
           -- solve for time to next intersection in dimension i
-          let s = sig ! i
-              u = fi ((round_ ! i) (cur' ! i) + s) - cur' ! i
-           in ( -- the time
-                u / direction ! i,
-                -- grid point
-                \v ->
-                  let roundedv = tabulate \j -> (round_ ! j) (v ! j)
-                   in roundedv & el i +~ s
-              )
+          ( -- the time
+            let u = fi ((round_ ! i) (cur' ! i) + sig ! i) - cur' ! i
+             in u / direction ! i,
+            -- grid point
+            \v ->
+              let roundedv = tabulate \j -> round (v ! j)
+               in liftA2 (-) sig roundedv & el i +~ sig ! i
+          )
         add c x y =
           -- Kahan's compensated sum (x += y)
           let y' = y - c
@@ -88,8 +91,14 @@ march start direction = runST do
         s = vadd cur' $ direction <&> (* tim)
         newcur = fst <$> s
         newcom = snd <$> s
-    write cur newcur
+        -- properly round coordinates meant to be integers
+        newcur' = tabulate @f \i ->
+          let n = newcur ! i
+           in if nearequal tim $ fst $ times ! i
+                then fi $ round n
+                else n
+    write cur newcur'
     write com newcom
-    ((tim, newcur, ($ newcur) <$> sametimes) :) <$> this
+    ((tim, newcur', ($ newcur) <$> sametimes) :) <$> this
 {-# INLINEABLE march #-}
 {-# SPECIALIZE march :: V3 Double -> V3 Double -> [(Double, V3 Double, [V3 Int])] #-}
