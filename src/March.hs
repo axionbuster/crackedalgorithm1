@@ -47,6 +47,7 @@ march start direction = runST do
           | isNaN b -> a
           | otherwise -> min a b -- if both are NaN, then pick either
       sig = floor . signum <$> direction
+      -- round toward opposite direction of a signum component
       round_ (-1) = ceiling
       round_ 1 = floor
       round_ _ = floor -- direction is zero, so it doesn't matter
