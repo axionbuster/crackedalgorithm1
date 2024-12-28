@@ -1,8 +1,10 @@
 -- | march along a line segment, finding all intersections with grid points
 module March (march) where
 
+import Control.Lens hiding (index)
 import Control.Monad.Fix
 import Control.Monad.ST.Lazy
+import Data.Foldable
 import Data.Functor
 import Data.Functor.Rep
 import Data.STRef.Lazy
@@ -23,14 +25,16 @@ march ::
   ( Applicative f,
     Foldable f,
     Representable f,
-    RealFloat a
+    Rep f ~ E f,
+    RealFloat a,
+    Epsilon a
   ) =>
   -- | starting point
   f a ->
   -- | direction (no need to be normalized)
   f a ->
-  -- | list of (delta time, point) pairs
-  [(a, f a)]
+  -- | list of (delta time, point, [grid point]) pairs
+  [(a, f a, [f Int])]
 march start direction = runST do
   let fi = fromIntegral :: Int -> a
       new = newSTRef
@@ -42,9 +46,11 @@ march start direction = runST do
           | isNaN b -> a
           | otherwise -> min a b -- if both are NaN, then pick either
       sig = floor . signum <$> direction
-      func 1 = floor
-      func (-1) = ceiling
-      func _ = floor -- direction is zero, so it doesn't matter
+      round_ = f <$> sig
+        where
+          f (-1) = ceiling
+          f 1 = floor
+          f _ = floor -- direction is zero, so it doesn't matter
   cur <- new start
   com <- new $ pure 0 -- Kahan sum compensator
   fix \this -> do
@@ -56,8 +62,14 @@ march start direction = runST do
         t cur' i =
           -- solve for time to next intersection in dimension i
           let s = sig ! i
-              u = fi (func s (cur' ! i) + s) - cur' ! i
-           in u / direction ! i
+              u = fi ((round_ ! i) (cur' ! i) + s) - cur' ! i
+           in ( -- the time
+                u / direction ! i,
+                -- grid point
+                \v ->
+                  let roundedv = tabulate \j -> (round_ ! j) (v ! j)
+                   in roundedv & el i +~ s
+              )
         add c x y =
           -- Kahan's compensated sum (x += y)
           let y' = y - c
@@ -66,8 +78,11 @@ march start direction = runST do
            in (s, c')
     com' <- read com
     cur' <- read cur
-    let tim = minimum_ $ tabulate @f $ t cur'
-        vadd v w = tabulate @f \i ->
+    let times = tabulate @f $ t cur'
+        nearequal = (nearZero .) . subtract
+        tim = minimum_ $ fmap fst times
+        sametimes = fmap snd $ filter (nearequal tim . fst) $ toList times
+        vadd v w = tabulate \i ->
           -- elementwise error-compensated vector addition
           add (com' ! i) (v ! i) (w ! i)
         s = vadd cur' $ direction <&> (* tim)
@@ -75,6 +90,6 @@ march start direction = runST do
         newcom = snd <$> s
     write cur newcur
     write com newcom
-    ((tim, newcur) :) <$> this
+    ((tim, newcur, ($ newcur) <$> sametimes) :) <$> this
 {-# INLINEABLE march #-}
-{-# SPECIALIZE march :: V3 Double -> V3 Double -> [(Double, V3 Double)] #-}
+{-# SPECIALIZE march :: V3 Double -> V3 Double -> [(Double, V3 Double, [V3 Int])] #-}

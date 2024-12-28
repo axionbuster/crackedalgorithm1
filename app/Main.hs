@@ -2,8 +2,8 @@ module Main (main) where
 
 import Control.Exception
 import Data.Function
-import March (march)
 import Linear
+import March (march)
 import System.Environment
 import Text.Printf
 
@@ -27,5 +27,5 @@ main = do
           do points
         pure (defa, defb, points)
   printf " time  ... point\n"
-  take n (march a b) & mapM_ \(t, V2 x y) ->
-    printf "%.4f ... V2 %.4f %.4f\n" t x y
+  take n (march a b) & mapM_ \(t, V2 x y, blocks) ->
+    printf "%.4f ... V2 %.4f %.4f %s\n" t x y (show blocks)
