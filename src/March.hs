@@ -47,11 +47,9 @@ march start direction = runST do
           | isNaN b -> a
           | otherwise -> min a b -- if both are NaN, then pick either
       sig = floor . signum <$> direction
-      round_ = f <$> sig
-        where
-          f (-1) = ceiling
-          f 1 = floor
-          f _ = floor -- direction is zero, so it doesn't matter
+      round_ (-1) = ceiling
+      round_ 1 = floor
+      round_ _ = floor -- direction is zero, so it doesn't matter
   cur <- new start
   com <- new $ pure 0 -- Kahan sum compensator
   fix \this -> do
@@ -65,12 +63,29 @@ march start direction = runST do
     let times = tabulate @f \i ->
           -- solve for time to next intersection in dimension i
           ( -- the time
-            let u = fi ((round_ ! i) (cur' ! i) + sig ! i) - cur' ! i
+            let r = round_ $ sig ! i
+                u = fi (r (cur' ! i) + sig ! i) - cur' ! i
              in u / direction ! i,
             -- grid point (compute from later-determined cur value)
+            -- this was the hardest part to figure out
             \v ->
-              let roundedv = round <$> v
-               in liftA2 (-) roundedv sig & el i +~ sig ! i
+              -- 1
+              -- on (round_ (-(sig ! i))) ... you need a greatest integer
+              -- less than (or least integer greater than) the current
+              -- coordinate, which is either ((subtract 1) . ceiling)
+              -- or ((+ 1) . floor), depending on the the OPPOSITE side of the
+              -- signum of the direction. the subtract 1 vs. + 1 will be done
+              -- when we subtract the sig component from the grid point
+              -- later on
+              --
+              -- 2
+              -- on (max 0 <$> sig) ... if you flip the coordinate system
+              -- by some axis, the grid points are still numbered by the
+              -- bottom left (& etc) corner, so you need to subtract 1
+              -- from the grid point if the direction is negative. this
+              -- means to add 1 to the sig component -> hence max 0
+              let roundedv = tabulate \j -> (round_ (-(sig ! j))) (v ! j)
+               in liftA2 (-) roundedv (max 0 <$> sig) & el i +~ sig ! i
           )
         tim = minimum_ $ fmap fst times
         eqtim = nearZero . subtract tim
