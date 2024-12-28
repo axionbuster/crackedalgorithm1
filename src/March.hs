@@ -98,7 +98,7 @@ march start direction = runST do
                 else n
     write cur newcur'
     write com newcom
-    ((tim, newcur', gridcoordsf <&> ($ newcur)) :) <$> this
+    ((tim, newcur', gridcoordsf <&> ($ newcur')) :) <$> this
 {-# INLINEABLE march #-}
 {-# SPECIALIZE march :: V3 Double -> V3 Double -> [(Double, V3 Double, [V3 Int])] #-}
 {-# SPECIALIZE march :: V3 Float -> V3 Float -> [(Float, V3 Float, [V3 Int])] #-}
