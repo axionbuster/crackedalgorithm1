@@ -40,6 +40,7 @@ march ::
   [(a, f a, [f Int])]
 march start direction = runST do
   let fi = fromIntegral :: Int -> a
+      (!) = index
       new = newSTRef
       read = readSTRef
       write = writeSTRef
@@ -62,43 +63,46 @@ march start direction = runST do
     -- using the parametric equation of the line segment
     -- find the closest intersection with the grid -> get 'time' value
     -- then use the 'time' to get the coordinates of the intersection
-    let (!) = index
-        t cur' i =
+    -- 'current' location and compensator
+    com' <- read com
+    cur' <- read cur
+    let times = tabulate @f \i ->
           -- solve for time to next intersection in dimension i
           ( -- the time
             let u = fi ((round_ ! i) (cur' ! i) + sig ! i) - cur' ! i
              in u / direction ! i,
-            -- grid point
+            -- grid point (compute from later-determined cur value)
             \v ->
               let roundedv = tabulate \j -> round (v ! j)
                in liftA2 (-) sig roundedv & el i +~ sig ! i
           )
-        add c x y =
-          -- Kahan's compensated sum (x += y)
-          let y' = y - c
-              s = x + y'
-              c' = s - x - y'
-           in (s, c')
-    com' <- read com
-    cur' <- read cur
-    let times = tabulate @f $ t cur'
-        nearequal = (nearZero .) . subtract
         tim = minimum_ $ fmap fst times
-        sametimes = fmap snd $ filter (nearequal tim . fst) $ toList times
+        eqtim = nearZero . subtract tim
+        -- list of functions that, given a point, return the grid coordinates
+        gridcoordsf = fmap snd $ filter (eqtim . fst) $ toList times
         vadd v w = tabulate \i ->
           -- elementwise error-compensated vector addition
           add (com' ! i) (v ! i) (w ! i)
+          where
+            add c x y =
+              -- Kahan's compensated sum (x += y)
+              let y' = y - c
+                  u = x + y'
+                  c' = u - x - y'
+               in (u, c')
+        -- update current position and compensator
         s = vadd cur' $ direction <&> (* tim)
         newcur = fst <$> s
         newcom = snd <$> s
         -- properly round coordinates meant to be integers
         newcur' = tabulate @f \i ->
           let n = newcur ! i
-           in if nearequal tim $ fst $ times ! i
+           in if eqtim $ fst $ times ! i
                 then fi $ round n
                 else n
     write cur newcur'
     write com newcom
-    ((tim, newcur', ($ newcur) <$> sametimes) :) <$> this
+    ((tim, newcur', gridcoordsf <&> ($ newcur)) :) <$> this
 {-# INLINEABLE march #-}
 {-# SPECIALIZE march :: V3 Double -> V3 Double -> [(Double, V3 Double, [V3 Int])] #-}
+{-# SPECIALIZE march :: V3 Float -> V3 Float -> [(Float, V3 Float, [V3 Int])] #-}
