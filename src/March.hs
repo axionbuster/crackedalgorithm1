@@ -8,9 +8,7 @@ import Data.Foldable
 import Data.Functor
 import Data.Functor.Rep
 import Data.STRef.Lazy
-import Debug.Trace
 import Linear hiding (trace)
-import Text.Printf
 import Prelude hiding (read)
 
 -- | march along a line segment, finding all intersections
@@ -29,7 +27,6 @@ march ::
     Representable f,
     Rep f ~ E f,
     RealFloat a,
-    PrintfArg a,
     Epsilon a
   ) =>
   -- | starting point
@@ -50,9 +47,8 @@ march start direction = runST do
           | isNaN b -> a
           | otherwise -> min a b -- if both are NaN, then pick either
       sig = floor . signum <$> direction
-      round_ = g <$> sig
+      round_ = f <$> sig
         where
-          g x y = trace (printf "round_ %f -> %d" y (f x y :: Int)) $ f x y
           f (-1) = ceiling
           f 1 = floor
           f _ = floor -- direction is zero, so it doesn't matter
