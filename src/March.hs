@@ -74,7 +74,7 @@ march start direction = runST do
             -- grid point (compute from later-determined cur value)
             \v ->
               let roundedv = tabulate \j -> round (v ! j)
-               in liftA2 (-) sig roundedv & el i +~ sig ! i
+               in liftA2 (-) roundedv sig & el i +~ sig ! i
           )
         tim = minimum_ $ fmap fst times
         eqtim = nearZero . subtract tim
