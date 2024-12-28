@@ -22,8 +22,7 @@ import Prelude hiding (read)
 -- use 'take' to limit the number of points to be computed
 march ::
   forall f a.
-  ( Applicative f,
-    Foldable f,
+  ( Foldable f,
     Representable f,
     Rep f ~ E f,
     RealFloat a,
@@ -41,6 +40,7 @@ march start direction = runST do
       new = newSTRef
       read = readSTRef
       write = writeSTRef
+      lift2 f x y = tabulate @f \i -> f (x ! i) (y ! i)
       minimum_ = foldr1 \a b ->
         if
           | isNaN a -> b
@@ -52,7 +52,7 @@ march start direction = runST do
       round_ 1 = floor
       round_ _ = floor -- direction is zero, so it doesn't matter
   cur <- new start
-  com <- new $ pure 0 -- Kahan sum compensator
+  com <- new $ tabulate @f (const 0) -- Kahan sum compensator
   fix \this -> do
     -- mechanism:
     -- using the parametric equation of the line segment
@@ -86,7 +86,7 @@ march start direction = runST do
               -- from the grid point if the direction is negative. this
               -- means to add 1 to the sig component -> hence max 0
               let roundedv = tabulate \j -> (round_ (-(sig ! j))) (v ! j)
-               in liftA2 (-) roundedv (max 0 <$> sig) & el i +~ sig ! i
+               in lift2 (-) roundedv (max 0 <$> sig) & el i +~ sig ! i
           )
         tim = minimum_ $ fmap fst times
         eqtim = nearZero . subtract tim
