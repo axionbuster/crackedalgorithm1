@@ -6,6 +6,7 @@ import Control.Monad.ST.Lazy
 import Data.Functor
 import Data.Functor.Rep
 import Data.STRef.Lazy
+import Linear
 import Prelude hiding (read)
 
 -- | march along a line segment, finding all intersections
@@ -76,3 +77,4 @@ march start direction = runST do
     write com newcom
     ((tim, newcur) :) <$> this
 {-# INLINEABLE march #-}
+{-# SPECIALIZE march :: V3 Double -> V3 Double -> [(Double, V3 Double)] #-}
