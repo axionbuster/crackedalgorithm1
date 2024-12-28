@@ -37,10 +37,13 @@ library
       src
   default-extensions:
       BlockArguments
+      DataKinds
       DeriveAnyClass
       DerivingStrategies
       LambdaCase
+      LinearTypes
       MultiWayIf
+      TypeFamilies
       ScopedTypeVariables
       UndecidableInstances
       ViewPatterns
@@ -48,8 +51,8 @@ library
   build-depends:
       adjunctions
     , base
+    , effectful
     , hashable
-    , heftia
     , lens
     , linear
   default-language: GHC2021
@@ -64,10 +67,13 @@ executable crackedalgorithm1-exe
       app
   default-extensions:
       BlockArguments
+      DataKinds
       DeriveAnyClass
       DerivingStrategies
       LambdaCase
+      LinearTypes
       MultiWayIf
+      TypeFamilies
       ScopedTypeVariables
       UndecidableInstances
       ViewPatterns
@@ -76,8 +82,8 @@ executable crackedalgorithm1-exe
       adjunctions
     , base
     , crackedalgorithm1
+    , effectful
     , hashable
-    , heftia
     , lens
     , linear
   default-language: GHC2021
@@ -94,10 +100,13 @@ test-suite crackedalgorithm1-test
       test
   default-extensions:
       BlockArguments
+      DataKinds
       DeriveAnyClass
       DerivingStrategies
       LambdaCase
+      LinearTypes
       MultiWayIf
+      TypeFamilies
       ScopedTypeVariables
       UndecidableInstances
       ViewPatterns
@@ -106,8 +115,8 @@ test-suite crackedalgorithm1-test
       adjunctions
     , base
     , crackedalgorithm1
+    , effectful
     , hashable
-    , heftia
     , hspec
     , lens
     , linear

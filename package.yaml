@@ -25,16 +25,19 @@ dependencies:
 - lens
 - linear
 - hashable
-- heftia
+- effectful
 
 language:   GHC2021
 
 default-extensions:
 - BlockArguments
+- DataKinds
 - DeriveAnyClass
 - DerivingStrategies
 - LambdaCase
+- LinearTypes
 - MultiWayIf
+- TypeFamilies
 - ScopedTypeVariables
 - UndecidableInstances
 - ViewPatterns
