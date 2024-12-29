@@ -75,10 +75,11 @@ resolve' =
         fps = facepoints a b
           where
             V2 a b = fmap ceiling <$> corners myself
-        minimum_ = minimumBy (comparing hitprop)
+        minimum_ [] = Nothing
+        minimum_ xs = Just $ minimumBy (comparing hitprop) xs
     -- compute the times ("hits") at which the object will hit a block
     -- and then find the earliest hit
-    earliest <-
+    mearliest <-
       minimum_ . concat <$> for fps \fp -> do
         -- shoot ray & break at first hit
         let raystart = scenter myself + (fromIntegral <$> fp)
@@ -120,22 +121,27 @@ resolve' =
                             (blockshort block ? consbelow) <*> continuegp gp''
                       -- no block at the grid point
                       Nothing -> consbelow <*> continuegp gp''
-    -- now correct the displacement; advance position
-    let flush x = if nearZero x then 0 else x
-        delta = flush <$> (hitprop earliest *^ disp)
-        collided = (/= 0) <$> hitnorm earliest
-        resdis = tabulate \i ->
-          let (!) = index
-           in if collided ! i
-                then 0 -- collision cancels out the displacement
-                else (1 - hitprop earliest) * (disp ! i)
-        respos = scenter myself + delta
-        newself = translate respos myself
-    Resolve {resdis, respos}
-      & if or collided
-        && not (and collided)
-        && not (nearZero resdis)
-        then
-          continue newself
-        else
-          pure
+    case mearliest of
+      Nothing ->
+        -- no collision
+        pure resolution
+      Just earliest -> do
+        -- now correct the displacement; advance position
+        let flush x = if nearZero x then 0 else x
+            delta = flush <$> (hitprop earliest *^ disp)
+            collided = (/= 0) <$> hitnorm earliest
+            resdis = tabulate \i ->
+              let (!) = index
+               in if collided ! i
+                    then 0 -- collision cancels out the displacement
+                    else (1 - hitprop earliest) * (disp ! i)
+            respos = scenter myself + delta
+            newself = translate respos myself
+        Resolve {resdis, respos}
+          & if or collided
+            && not (and collided)
+            && not (nearZero resdis)
+            then
+              continue newself
+            else
+              pure
