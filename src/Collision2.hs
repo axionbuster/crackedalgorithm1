@@ -99,7 +99,7 @@ resolve' =
     -- compute the times ("hits") at which the object will hit a block
     -- and then find the earliest hit
     mearliest <-
-      minimum_ . concat <$> for fps \fp -> do
+      minimum_ . concat <$> for fps \fp ->
         -- shoot ray & break at first hit
         let raystart = scenter myself + (fromIntegral <$> fp)
          in march raystart disp & fix \continuerm rm -> case rm of
