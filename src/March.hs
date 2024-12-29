@@ -12,7 +12,17 @@ import Linear hiding (trace)
 import Prelude hiding (read)
 
 -- | march along a line segment, finding all intersections
--- with grid points
+-- with grid squares or cubes (depending on the dimensionality)
+-- as well as the time it takes to reach each intersection
+-- and the cubes that are intersected
+--
+-- the cubes are represented by their bottom-left corner
+--
+-- in 2D, when a point is intersected, it will return the two squares
+-- that are intersected by the line segment. so note that it doesn't
+-- include the diagonal square
+--
+-- in 3D, it will return three cubes in the same way. no diagonal cube
 --
 -- the starting point is NOT included in the output
 --
