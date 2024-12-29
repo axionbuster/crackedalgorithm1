@@ -114,7 +114,7 @@ resolve' =
                   [] -> continuerm rm'
                   -- let's check the block at the grid point
                   cb' : cb'' -> do
-                    let consbelow =
+                    let checkbelow =
                           -- go below and check too
                           getblock (cb' - V3 0 1 0) <&> \case
                             Just blockbelow
@@ -134,12 +134,12 @@ resolve' =
                         -- are independent of each other
                         | Just hit <- hitting disp myself block ->
                             -- oh, we hit something
-                            (short block ? consbelow) <*> pure [hit]
+                            (short block ? checkbelow) <*> pure [hit]
                         | otherwise ->
                             -- a block is there but we don't hit it
-                            (short block ? consbelow) <*> continuecb cb''
+                            (short block ? checkbelow) <*> continuecb cb''
                       -- no block at the grid point
-                      Nothing -> consbelow <*> continuecb cb''
+                      Nothing -> checkbelow <*> continuecb cb''
     case mearliest of
       Nothing ->
         -- no collision
