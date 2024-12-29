@@ -153,7 +153,8 @@ resolve' =
       Just earliest -> do
         -- now correct the displacement; advance position
         let (!) = index
-            flush x = if nearZero x then 0 else x
+            flush x | nearZero x = 0
+            flush x = x
             delta = flush <$> (hitprop earliest *^ disp)
             collided = (/= 0) <$> hitnorm earliest
             resdis = tabulate \i ->
