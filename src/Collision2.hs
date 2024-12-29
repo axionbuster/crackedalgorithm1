@@ -74,10 +74,11 @@ resolve' =
         fps = facepoints a b
           where
             V2 a b = fmap ceiling <$> corners myself
+        minimum_ = minimumBy (comparing hitprop)
     -- compute the times ("hits") at which the object will hit a block
     -- and then find the earliest hit
-    (minimumBy (comparing hitprop) -> earliest) <-
-      concat <$> for fps \fp -> do
+    earliest <-
+      minimum_ . fmap minimum_ <$> for fps \fp -> do
         -- shoot ray & break at first hit
         let raystart = scenter myself + (fromIntegral <$> fp)
          in march raystart disp & fix \continuerm rm -> case rm of
