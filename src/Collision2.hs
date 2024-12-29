@@ -109,14 +109,14 @@ resolve' =
               (t, _, _) : rm' | t > 1 -> continuerm rm'
               -- grid cubes, are there any blocks?
               (_, _, cubes) : rm' ->
-                cubes & fix \continuegp gp -> case gp of
+                cubes & fix \continuecb cb -> case cb of
                   -- no more grid points, so no
                   [] -> continuerm rm'
                   -- let's check the block at the grid point
-                  gp' : gp'' -> do
+                  cb' : cb'' -> do
                     let consbelow =
                           -- go below and check too
-                          getblock (gp' - V3 0 1 0) <&> \case
+                          getblock (cb' - V3 0 1 0) <&> \case
                             Just blockbelow
                               | Just hitbelow <-
                                   hitting disp myself blockbelow ->
@@ -128,7 +128,7 @@ resolve' =
                     -- check if the block at the grid point exists & is solid
                     -- also just in case a tall block (like a fence)
                     -- is there, we check the block below it
-                    getblock gp' >>= \case
+                    getblock cb' >>= \case
                       Just block
                         -- note: ray location and myself location
                         -- are independent of each other
@@ -137,9 +137,9 @@ resolve' =
                             (blockshort block ? consbelow) <*> pure [hit]
                         | otherwise ->
                             -- a block is there but we don't hit it
-                            (blockshort block ? consbelow) <*> continuegp gp''
+                            (blockshort block ? consbelow) <*> continuecb cb''
                       -- no block at the grid point
-                      Nothing -> consbelow <*> continuegp gp''
+                      Nothing -> consbelow <*> continuecb cb''
     case mearliest of
       Nothing ->
         -- no collision
