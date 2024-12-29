@@ -131,8 +131,7 @@ resolve' =
                 else (1 - hitprop earliest) * (disp ! i)
         respos = scenter myself + delta
         newself = translate respos myself
-        newresolve = Resolve {resdis, respos}
-    newresolve
+    Resolve {resdis, respos}
       & if or collided
         && not (and collided)
         && not (nearZero resdis)
