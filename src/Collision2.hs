@@ -124,7 +124,7 @@ resolve' =
                             _ -> id
                         True ? action = action
                         False ? _ = pure id
-                        blockshort b = shicorner b ^. _y < 0.5
+                        short b = shicorner b ^. _y < 0.5
                     -- check if the block at the grid point exists & is solid
                     -- also just in case a tall block (like a fence)
                     -- is there, we check the block below it
@@ -134,10 +134,10 @@ resolve' =
                         -- are independent of each other
                         | Just hit <- hitting disp myself block ->
                             -- oh, we hit something
-                            (blockshort block ? consbelow) <*> pure [hit]
+                            (short block ? consbelow) <*> pure [hit]
                         | otherwise ->
                             -- a block is there but we don't hit it
-                            (blockshort block ? consbelow) <*> continuecb cb''
+                            (short block ? consbelow) <*> continuecb cb''
                       -- no block at the grid point
                       Nothing -> consbelow <*> continuecb cb''
     case mearliest of
