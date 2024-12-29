@@ -41,6 +41,7 @@ getblock ::
   -- what block is \"relevant\" is up to the implementation
   Eff ef (Maybe (f a))
 getblock = send . GetBlock
+{-# INLINE getblock #-}
 
 -- | detect and resolve collision
 resolve ::
@@ -55,7 +56,9 @@ resolve myself disp =
   resolve'
     myself
     Resolve {respos = scenter myself, resdis = disp}
+{-# INLINE resolve #-}
 
+-- the actual implementation of 'resolve'
 resolve' ::
   forall s n ef.
   (Shape s, RealFloat n, Epsilon n, GetBlock s n :> ef) =>
@@ -114,18 +117,23 @@ resolve' =
                             (blockshort block ? consbelow) <*> continuegp gp''
                       -- no block at the grid point
                       Nothing -> consbelow <*> continuegp gp''
-    -- now correct the displacement
+    -- now correct the displacement; advance position
     let flush x = if nearZero x then 0 else x
         delta = flush <$> (hitprop earliest *^ disp)
+        collided = (/= 0) <$> hitnorm earliest
         resdis = tabulate \i ->
           let (!) = index
-           in if hitnorm earliest ! i /= 0
-                then 0
+           in if collided ! i
+                then 0 -- collision cancels out the displacement
                 else (1 - hitprop earliest) * (disp ! i)
         respos = scenter myself + delta
         newself = translate respos myself
-    if error "check not stuck"
-      then
-        continue newself Resolve {resdis, respos}
-      else
-        pure Resolve {resdis, respos}
+        newresolve = Resolve {resdis, respos}
+    newresolve
+      & if or collided
+        && not (and collided)
+        && not (nearZero resdis)
+        then
+          continue newself
+        else
+          pure
