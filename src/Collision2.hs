@@ -22,7 +22,7 @@ data Resolve a = Resolve
     -- | displacement
     resdis :: !(V3 a)
   }
-  deriving (Show, Eq, Ord)
+  deriving (Show, Eq)
 
 -- | get a block's shape at integer coordinates
 data GetBlock (f :: Type -> Type) a :: Effect where
