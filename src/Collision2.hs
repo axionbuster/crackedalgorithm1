@@ -1,6 +1,7 @@
 -- | "effectful" collision detection and resolution
 module Collision2
   ( GetBlock (..),
+    Resolve (..),
     NewlyTouchingGround (..),
     getblock,
     resolve,
@@ -21,7 +22,7 @@ import Face
 import Linear
 import March
 
--- | collision resolution data type (internal use)
+-- | collision resolution data type
 data Resolve a = Resolve
   { -- | position
     respos :: !(V3 a),
@@ -66,20 +67,13 @@ resolve ::
   s n ->
   -- | attempted displacement
   V3 n ->
-  -- | new position
-  Eff ef (NewlyTouchingGround, V3 n)
-resolve myself disp
-  | nearZero disp =
-      pure (NewlyTouchingGround False, scenter myself)
-  | otherwise =
-      ((,) <$> restou <*> resdis)
-        <$> resolve'
-          myself
-          Resolve
-            { respos = scenter myself,
-              resdis = disp,
-              restou = NewlyTouchingGround False
-            }
+  -- | new resolution
+  --
+  -- unless it got stuck, the new displacement should be near zero
+  Eff ef (Resolve n)
+resolve myself disp =
+  Resolve (scenter myself) disp (NewlyTouchingGround False)
+    & if nearZero disp then pure else resolve' myself
 {-# INLINE resolve #-}
 
 -- the actual implementation of 'resolve'
