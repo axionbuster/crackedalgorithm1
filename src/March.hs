@@ -95,7 +95,7 @@ march start direction = runST do
               -- bottom left (& etc) corner, so you need to subtract 1
               -- from the grid point if the direction is negative. this
               -- means to add 1 to the sig component -> hence max 0
-              let roundedv = tabulate \j -> (round_ (-(sig ! j))) (v ! j)
+              let roundedv = tabulate \j -> round_ (-(sig ! j)) (v ! j)
                in lift2 (-) roundedv (max 0 <$> sig) & el i +~ sig ! i
           )
         tim = minimum_ $ fmap fst times
