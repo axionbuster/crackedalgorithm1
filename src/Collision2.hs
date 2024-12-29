@@ -107,9 +107,9 @@ resolve' =
               [] -> pure []
               -- no hit
               (t, _, _) : rm' | t > 1 -> continuerm rm'
-              -- grid points, are there any blocks?
-              (_, _, gridpoints) : rm' ->
-                gridpoints & fix \continuegp gp -> case gp of
+              -- grid cubes, are there any blocks?
+              (_, _, cubes) : rm' ->
+                cubes & fix \continuegp gp -> case gp of
                   -- no more grid points, so no
                   [] -> continuerm rm'
                   -- let's check the block at the grid point
