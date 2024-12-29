@@ -1,15 +1,18 @@
 {-# LANGUAGE MonoLocalBinds #-}
 
--- | collision detection and resolution
+-- | pure collision detection and resolution
 module Collision
   ( Shape (..),
-    Shape' (..),
     SomeShape1 (..),
     Hit (..),
     Box (..),
     ManyBoxes (..),
+    _dimensions,
+    _center,
     castshape1,
     boxzero,
+    hicorner,
+    locorner,
   )
 where
 
@@ -36,15 +39,12 @@ data Hit a = Hit
   }
   deriving (Show)
 
--- | existential 'Shape' type but numeric type is erased
---
--- 'Shape\'' is used when the underlying types are different in certain methods
+-- | existential 'Shape' type but where numeric type is erased
 data SomeShape1 a
   = forall s.
     ( Typeable (s a),
       Show (s a),
-      Shape s,
-      Shape' s
+      Shape s
     ) =>
     SomeShape1 (s a)
   deriving (Typeable)
@@ -61,6 +61,7 @@ instance Shape SomeShape1 where
     | otherwise = hitting v (tomanyboxes s1) (tomanyboxes s2)
   translate v (SomeShape1 s) = SomeShape1 (translate v s)
   corners (SomeShape1 s) = corners s
+  tomanyboxes (SomeShape1 s) = tomanyboxes s
 
 -- | cast a 'SomeShape1' to a specific type
 castshape1 :: (Typeable b) => SomeShape1 a -> Maybe b
@@ -82,6 +83,12 @@ class Shape s where
   -- respectively
   corners :: (Fractional a, Ord a) => s a -> V2 (V3 a)
 
+  -- | convert a 'Shape' to a 'ManyBoxes' of 'Box'es with a list container,
+  -- which is a canonical form for 'ManyBoxes'
+  --
+  -- 'Shape' is a related type class
+  tomanyboxes :: s a -> ManyBoxes [] a
+
 -- | a box in 3D space, located either relatively or absolutely
 data Box a = Box
   { -- | the dimensions of the box
@@ -94,14 +101,10 @@ data Box a = Box
 -- | a newtype over a 'Foldable' 'Functor' container of 'Box'es
 newtype ManyBoxes f a = ManyBoxes (f (Box a))
 
--- | unify the types of a 'Shape' container
---
--- used to help with existential types in 'SomeShape1'
-class Shape' s where
-  -- | convert a 'Shape' to a 'ManyBoxes' of 'Box'es with a list container
-  --
-  -- 'Shape' is a related type class
-  tomanyboxes :: s a -> ManyBoxes [] a
+instance (Functor f) => Functor (ManyBoxes f) where
+  fmap f (ManyBoxes boxes) = ManyBoxes $ fmap g boxes
+    where
+      g (Box d c) = Box (f <$> d) (f <$> c)
 
 -- | Lens for the dimensions of the box
 _dimensions :: Lens' (Box a) (V3 a)
@@ -173,8 +176,6 @@ instance Shape Box where
      in lotest && hitest
   translate displacement box = box {center = displacement + center box}
   corners box = V2 (locorner box) (hicorner box)
-
-instance Shape' Box where
   tomanyboxes = ManyBoxes . pure
 
 -- | a box with zero dimensions and center
@@ -234,5 +235,4 @@ instance (Functor f, Foldable f) => Shape (ManyBoxes f) where
         high = foldr (tropical1 . hicorner) (pure (-1 / 0)) boxes
      in V2 low high
 
-instance (Foldable f) => Shape' (ManyBoxes f) where
   tomanyboxes (ManyBoxes boxes) = ManyBoxes $ toList boxes
