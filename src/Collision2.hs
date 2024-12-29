@@ -96,12 +96,12 @@ resolve' =
                   gp' : gp'' -> do
                     let consbelow =
                           -- go below and check too
-                          getblock (gp' - V3 0 1 0) >>= \case
+                          getblock (gp' - V3 0 1 0) <&> \case
                             Just blockbelow
                               | Just hitbelow <-
                                   hitting disp myself blockbelow ->
-                                  pure (hitbelow :)
-                            _ -> pure id
+                                  (hitbelow :)
+                            _ -> id
                         True ? action = action
                         False ? _ = pure id
                         blockshort b = shicorner b ^. _y < 0.5
