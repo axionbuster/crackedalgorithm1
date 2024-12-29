@@ -102,7 +102,8 @@ resolve' =
                                   hitting disp myself blockbelow ->
                                   pure (hitbelow :)
                             _ -> pure id
-                        cond ? action = if cond then action else pure id
+                        True ? action = action
+                        False ? _ = pure id
                         blockshort b = shicorner b ^. _y < 0.5
                     -- check if the block at the grid point exists & is solid
                     -- also just in case a tall block (like a fence)
