@@ -99,6 +99,8 @@ data Box a = Box
   deriving stock (Show)
 
 -- | a newtype over a 'Foldable' 'Functor' container of 'Box'es
+--
+-- the low and high corners are those of the smallest bounding box
 newtype ManyBoxes f a = ManyBoxes (f (Box a))
 
 instance (Functor f) => Functor (ManyBoxes f) where
