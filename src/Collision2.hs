@@ -52,6 +52,7 @@ resolve ::
   V3 n ->
   -- | new position
   Eff ef (V3 n)
+resolve myself disp | nearZero disp = pure (scenter myself)
 resolve myself disp =
   resdis
     <$> resolve'
