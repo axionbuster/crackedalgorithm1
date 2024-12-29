@@ -101,7 +101,7 @@ resolve' =
           where
             V2 a b = fmap ceiling <$> corners myself
         minimum_ [] = Nothing
-        minimum_ xs = Just $ minimumBy (comparing hitprop) xs
+        minimum_ xs = Just $ minimumBy (comparing hittime) xs
     -- compute the times ("hits") at which the object will hit a block
     -- and then find the earliest hit
     mearliest <-
@@ -155,12 +155,12 @@ resolve' =
         let (!) = index
             flush x | nearZero x = 0
             flush x = x
-            delta = flush <$> (hitprop earliest *^ disp)
+            delta = flush <$> (hittime earliest *^ disp)
             collided = (/= 0) <$> hitnorm earliest
             resdis = tabulate \i ->
               if collided ! i
                 then 0 -- collision cancels out the displacement
-                else (1 - hitprop earliest) * (disp ! i)
+                else (1 - hittime earliest) * (disp ! i)
             respos = scenter myself + delta
             restou = NewlyTouchingGround $ hitnorm earliest ^. _y > 0
         Resolve {resdis, respos, restou}

@@ -29,7 +29,7 @@ import Linear
 -- | a collision resolution data type
 data Hit a = Hit
   { -- | proportion of move completed in [0, 1]
-    hitprop :: !a,
+    hittime :: !a,
     -- | the point of collision
     --
     -- if you're using 'Box', this is the center of the box
@@ -183,7 +183,7 @@ instance Shape Box where
             -- we have a hit!
             Just
               Hit
-                { hitprop = t,
+                { hittime = t,
                   hitwhere = center this + t *^ moving,
                   hitnorm =
                     let p1m1 x = if x then 1 else (-1)
@@ -234,7 +234,7 @@ instance (Functor f, Foldable f) => Shape (ManyBoxes f) where
         minimum' =
           Nothing & foldl' \case
             Nothing -> Just
-            Just x -> \y -> Just $ minBy hitprop x y
+            Just x -> \y -> Just $ minBy hittime x y
         nearest f = minimum' . mapMaybe f . toList
         firsthit boxes box = nearest (hitting moving box) boxes
      in nearest (firsthit those) these
