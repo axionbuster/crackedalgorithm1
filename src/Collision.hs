@@ -89,6 +89,10 @@ class Shape s where
   -- 'Shape' is a related type class
   tomanyboxes :: s a -> ManyBoxes [] a
 
+  -- | the center of the shape
+  scenter :: (Fractional a, Ord a) => s a -> V3 a
+  scenter s = (sum . corners $ s) <&> (/ 2) -- not numerically stable
+
 -- | a box in 3D space, located either relatively or absolutely
 data Box a = Box
   { -- | the dimensions of the box
@@ -179,6 +183,7 @@ instance Shape Box where
   translate displacement box = box {center = displacement + center box}
   corners box = V2 (locorner box) (hicorner box)
   tomanyboxes = ManyBoxes . pure
+  scenter = center
 
 -- | a box with zero dimensions and center
 boxzero :: (Num a) => Box a

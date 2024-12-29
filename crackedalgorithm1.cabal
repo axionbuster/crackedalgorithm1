@@ -36,6 +36,7 @@ library
   hs-source-dirs:
       src
   default-extensions:
+      AllowAmbiguousTypes
       BlockArguments
       DataKinds
       DeriveAnyClass
@@ -66,6 +67,7 @@ executable crackedalgorithm1-exe
   hs-source-dirs:
       app
   default-extensions:
+      AllowAmbiguousTypes
       BlockArguments
       DataKinds
       DeriveAnyClass
@@ -99,6 +101,7 @@ test-suite crackedalgorithm1-test
   hs-source-dirs:
       test
   default-extensions:
+      AllowAmbiguousTypes
       BlockArguments
       DataKinds
       DeriveAnyClass
