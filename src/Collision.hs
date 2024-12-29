@@ -13,6 +13,8 @@ module Collision
     boxzero,
     hicorner,
     locorner,
+    shicorner,
+    slocorner,
   )
 where
 
@@ -92,6 +94,26 @@ class Shape s where
   -- | the center of the shape
   scenter :: (Fractional a, Ord a) => s a -> V3 a
   scenter s = (sum . corners $ s) <&> (/ 2) -- not numerically stable
+
+  -- | the dimensions of the shape
+  sdimensions :: (Fractional a, Ord a) => s a -> V3 a
+  sdimensions s = let V2 h l = corners s in h - l
+
+v2fst :: V2 a -> a
+v2fst (V2 a _) = a
+
+v2snd :: V2 a -> a
+v2snd (V2 _ b) = b
+
+-- | the upper corner of the box
+shicorner :: (Shape s, Fractional a, Ord a) => s a -> V3 a
+shicorner = v2snd . corners
+{-# INLINE shicorner #-}
+
+-- | the lower corner of the box
+slocorner :: (Shape s, Fractional a, Ord a) => s a -> V3 a
+slocorner = v2fst . corners
+{-# INLINE slocorner #-}
 
 -- | a box in 3D space, located either relatively or absolutely
 data Box a = Box
@@ -184,6 +206,7 @@ instance Shape Box where
   corners box = V2 (locorner box) (hicorner box)
   tomanyboxes = ManyBoxes . pure
   scenter = center
+  sdimensions = dimensions
 
 -- | a box with zero dimensions and center
 boxzero :: (Num a) => Box a
