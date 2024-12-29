@@ -1,5 +1,11 @@
 -- | "effectful" collision detection and resolution
-module Collision2 (GetBlock (..), getblock, resolve) where
+module Collision2
+  ( GetBlock (..),
+    NewlyTouchingGround (..),
+    getblock,
+    resolve,
+  )
+where
 
 import Collision
 import Control.Lens hiding (index)
@@ -15,16 +21,26 @@ import Face
 import Linear
 import March
 
--- | collision resolution data type
+-- | collision resolution data type (internal use)
 data Resolve a = Resolve
   { -- | position
     respos :: !(V3 a),
     -- | displacement
-    resdis :: !(V3 a)
+    resdis :: !(V3 a),
+    -- | did it newly touch ground?
+    restou :: !NewlyTouchingGround
   }
   deriving (Show, Eq)
 
--- | get a block's shape at integer coordinates
+-- | newly touching ground?
+--
+-- - If 'True', the object is newly touching the ground.
+-- - If 'False' and the object was touching the ground, it is no longer.
+-- - If 'False' and the object was not touching the ground, it still isn't.
+newtype NewlyTouchingGround = NewlyTouchingGround {newonground :: Bool}
+  deriving newtype (Show, Eq, Ord, Enum, Bounded)
+
+-- | get a block's shape at integer coordinates (dynamic effect)
 data GetBlock (f :: Type -> Type) a :: Effect where
   -- | get a block's shape at integer coordinates
   GetBlock :: !(V3 Int) %1 -> GetBlock f a m (Maybe (f a))
@@ -51,13 +67,19 @@ resolve ::
   -- | attempted displacement
   V3 n ->
   -- | new position
-  Eff ef (V3 n)
-resolve myself disp | nearZero disp = pure (scenter myself)
-resolve myself disp =
-  resdis
-    <$> resolve'
-      myself
-      Resolve {respos = scenter myself, resdis = disp}
+  Eff ef (NewlyTouchingGround, V3 n)
+resolve myself disp
+  | nearZero disp =
+      pure (NewlyTouchingGround False, scenter myself)
+  | otherwise =
+      ((,) <$> restou <*> resdis)
+        <$> resolve'
+          myself
+          Resolve
+            { respos = scenter myself,
+              resdis = disp,
+              restou = NewlyTouchingGround False
+            }
 {-# INLINE resolve #-}
 
 -- the actual implementation of 'resolve'
@@ -128,17 +150,18 @@ resolve' =
         pure resolution
       Just earliest -> do
         -- now correct the displacement; advance position
-        let flush x = if nearZero x then 0 else x
+        let (!) = index
+            flush x = if nearZero x then 0 else x
             delta = flush <$> (hitprop earliest *^ disp)
             collided = (/= 0) <$> hitnorm earliest
             resdis = tabulate \i ->
-              let (!) = index
-               in if collided ! i
-                    then 0 -- collision cancels out the displacement
-                    else (1 - hitprop earliest) * (disp ! i)
+              if collided ! i
+                then 0 -- collision cancels out the displacement
+                else (1 - hitprop earliest) * (disp ! i)
             respos = scenter myself + delta
+            restou = NewlyTouchingGround $ hitnorm earliest ^. _y > 0
             newself = translate respos myself
-        Resolve {resdis, respos}
+        Resolve {resdis, respos, restou}
           & if or collided
             && not (and collided)
             && not (nearZero resdis)
