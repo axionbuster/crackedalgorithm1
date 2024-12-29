@@ -69,7 +69,7 @@ resolve ::
   V3 n ->
   -- | new resolution
   --
-  -- unless it got stuck, the new displacement should be near zero
+  -- unless it got stuck, the new displacement should be zero
   Eff ef (Resolve n)
 resolve myself disp =
   Resolve (scenter myself) disp (NewlyTouchingGround False)
@@ -151,7 +151,7 @@ resolve' =
             flush x = x
             delta = flush <$> (hittime earliest *^ disp)
             collided = (/= 0) <$> hitnorm earliest
-            resdis = tabulate \i ->
+            resdis = flush <$> tabulate \i ->
               if collided ! i
                 then 0 -- collision cancels out the displacement
                 else (1 - hittime earliest) * (disp ! i)
@@ -160,7 +160,7 @@ resolve' =
         Resolve {resdis, respos, restou}
           & if or collided
             && not (and collided)
-            && not (nearZero resdis)
+            && not (resdis == zero)
             then
               continue $ translate respos myself
             else
