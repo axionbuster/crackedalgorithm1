@@ -36,8 +36,8 @@ data Resolve a = Resolve
 -- | newly touching ground?
 --
 -- - If 'True', the object is newly touching the ground.
--- - If 'False' and the object was touching the ground, it is no longer.
--- - If 'False' and the object was not touching the ground, it still isn't.
+-- - If 'False' and the object was touching the ground, there is no saying.
+-- - If 'False' and the object was not touching the ground, it's still not.
 newtype NewlyTouchingGround = NewlyTouchingGround {newonground :: Bool}
   deriving newtype (Show, Eq, Ord, Enum, Bounded)
 
@@ -106,7 +106,7 @@ resolve' =
               -- this should be impossible
               [] -> pure []
               -- no hit
-              (t, _, _) : rm' | t > 1 -> continuerm rm'
+              (t, _, _) : _ | t > 1 -> pure []
               -- grid cubes, are there any blocks?
               (_, _, cubes) : rm' ->
                 cubes & fix \continuecb cb -> case cb of
@@ -134,7 +134,10 @@ resolve' =
                         -- are independent of each other
                         | Just hit <- hitting disp myself block ->
                             -- oh, we hit something
-                            (short block ? checkbelow) <*> pure [hit]
+                            (short block ? checkbelow)
+                              <*> ( pure (hit :)
+                                      <*> continuerm rm'
+                                  )
                         | otherwise ->
                             -- a block is there but we don't hit it
                             (short block ? checkbelow) <*> continuecb cb''
@@ -151,12 +154,18 @@ resolve' =
             flush x = x
             delta = flush <$> (hittime earliest *^ disp)
             collided = (/= 0) <$> hitnorm earliest
-            resdis = flush <$> tabulate \i ->
-              if collided ! i
-                then 0 -- collision cancels out the displacement
-                else (1 - hittime earliest) * (disp ! i)
+            resdis =
+              flush <$> tabulate \i ->
+                if collided ! i
+                  then 0 -- collision cancels out the displacement
+                  else (1 - hittime earliest) * (disp ! i)
             respos = scenter myself + delta
             restou = NewlyTouchingGround $ hitnorm earliest ^. _y > 0
+        -- do i collide with anything?
+        stuck <-
+          getblock (floor <$> respos) <&> \case
+            Just block -> intersecting myself block
+            Nothing -> False
         Resolve {resdis, respos, restou}
           & if or collided
             && not (and collided)
