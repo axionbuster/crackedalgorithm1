@@ -90,6 +90,8 @@ resolve' ::
   Resolve n ->
   Eff ef (Resolve n)
 resolve' =
+  -- this is a loop that will run until the displacement is resolved
+  -- (i.e., until it stops moving due to resolution or being blocked)
   fix \continue myself resolution -> do
     -- sample some points off the relevant faces of the object
     -- we will grid march along the rays (of the displacement) shot
