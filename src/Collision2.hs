@@ -1,5 +1,5 @@
 -- | "effectful" collision detection and resolution
-module Collision2 (Resolve (..), GetBlock (..), getblock, resolve) where
+module Collision2 (GetBlock (..), getblock, resolve) where
 
 import Collision
 import Control.Lens hiding (index)
@@ -50,12 +50,13 @@ resolve ::
   s n ->
   -- | attempted displacement
   V3 n ->
-  -- | collision detection and resolution
-  Eff ef (Resolve n)
+  -- | new position
+  Eff ef (V3 n)
 resolve myself disp =
-  resolve'
-    myself
-    Resolve {respos = scenter myself, resdis = disp}
+  resdis
+    <$> resolve'
+      myself
+      Resolve {respos = scenter myself, resdis = disp}
 {-# INLINE resolve #-}
 
 -- the actual implementation of 'resolve'
@@ -78,7 +79,7 @@ resolve' =
     -- compute the times ("hits") at which the object will hit a block
     -- and then find the earliest hit
     earliest <-
-      minimum_ . fmap minimum_ <$> for fps \fp -> do
+      minimum_ . concat <$> for fps \fp -> do
         -- shoot ray & break at first hit
         let raystart = scenter myself + (fromIntegral <$> fp)
          in march raystart disp & fix \continuerm rm -> case rm of
