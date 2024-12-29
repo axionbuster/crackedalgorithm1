@@ -162,12 +162,11 @@ resolve' =
                 else (1 - hitprop earliest) * (disp ! i)
             respos = scenter myself + delta
             restou = NewlyTouchingGround $ hitnorm earliest ^. _y > 0
-            newself = translate respos myself
         Resolve {resdis, respos, restou}
           & if or collided
             && not (and collided)
             && not (nearZero resdis)
             then
-              continue newself
+              continue $ translate respos myself
             else
               pure
