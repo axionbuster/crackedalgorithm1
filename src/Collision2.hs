@@ -67,16 +67,16 @@ resolve myself disp0 =
         concat <$> for fps \fp -> do
           -- shoot ray & break at first hit
           let raystart = scenter myself + (fromIntegral <$> fp)
-           in march raystart disp0 & fix \continue2 rm -> case rm of
+           in march raystart disp0 & fix \continuerm rm -> case rm of
                 -- this should be impossible
                 [] -> pure []
                 -- no hit
-                (t, _, _) : rm' | t > 1 -> continue2 rm'
+                (t, _, _) : rm' | t > 1 -> continuerm rm'
                 -- grid points, are there any blocks?
                 (t, _, gridpoints) : rm' ->
-                  gridpoints & fix \continue3 gp -> case gp of
+                  gridpoints & fix \continuegp gp -> case gp of
                     -- no more grid points, so no
-                    [] -> continue2 rm'
+                    [] -> continuerm rm'
                     -- let's check the block at the grid point
                     gp' : gp'' -> do
                       let consbelow =
@@ -101,7 +101,7 @@ resolve myself disp0 =
                               (blockshort block ? consbelow) <*> pure [hit]
                           | otherwise ->
                               -- a block is there but we don't hit it
-                              (blockshort block ? consbelow) <*> continue3 gp''
+                              (blockshort block ? consbelow) <*> continuegp gp''
                         -- no block at the grid point
-                        Nothing -> consbelow <*> continue3 gp''
+                        Nothing -> consbelow <*> continuegp gp''
       error "do something with hits" hits
