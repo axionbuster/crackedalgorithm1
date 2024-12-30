@@ -3,7 +3,6 @@ module Collision2Spec (spec) where
 import BlockModel1
 import Collision
 import Collision2
-import Control.Category ((>>>))
 import Data.Map.Strict as M
 import Effectful
 import Linear
@@ -15,9 +14,7 @@ genericcube l = Box (pure 1) (l + pure 0.5) -- dim, cent
 
 -- | given low coordinates return zombie
 genericzombie :: V3 Double -> Box Double
-genericzombie =
-  (+ V3 0.3 (-0.975) 0.3)
-    >>> (`translate` boxfromcorners (V3 (-0.3) 0 (-0.3)) (V3 0.3 1.95 0.3))
+genericzombie = (`translate` Box (V3 0.6 1.95 0.6) (V3 0.3 0.975 0.3))
 
 -- | given a list of coordinates return a model of stones
 stones :: [V3 Int] -> Model Box Double
@@ -38,7 +35,7 @@ spec = do
               Resolve
                 { -- don't ask me why the position is 0.7
                   -- i just got it from the original code
-                  respos = V3 0.3 42 0.7,
+                  respos = V3 0.3 42.975 0.7,
                   resdis = zero,
                   restou = NewlyTouchingGround {newonground = EQ}
                 }
