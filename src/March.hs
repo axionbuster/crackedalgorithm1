@@ -55,6 +55,9 @@ add x y c =
 --
 -- the returned list being infinite, it is recommended to
 -- use 'take' to limit the number of points to be computed
+--
+-- if the direction is (near) zero, or if any component of the
+-- direction is not finite, then the function will return an empty list
 march ::
   forall f a.
   ( Foldable f,
