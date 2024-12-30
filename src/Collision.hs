@@ -72,7 +72,7 @@ instance Shape SomeShape1 where
 castshape1 :: (Typeable b) => SomeShape1 a -> Maybe b
 castshape1 (SomeShape1 s) = cast s
 
--- | a translation of the @Shape@ interface from the original code
+-- | an AABB type class used for collision detection and resolution
 class Shape s where
   -- | check if two shapes intersect
   intersecting :: (Fractional a, Ord a) => s a -> s a -> Bool
