@@ -9,6 +9,8 @@ module Collision
     ManyBoxes (..),
     _dimensions,
     _center,
+    _lcorner,
+    _hcorner,
     boxfromcorners,
     castshape1,
     boxzero,
@@ -108,12 +110,12 @@ v2fst (V2 a _) = a
 v2snd :: V2 a -> a
 v2snd (V2 _ b) = b
 
--- | the upper corner of the box
+-- | the upper corner of a shape
 shicorner :: (Shape s, Fractional a, Ord a) => s a -> V3 a
 shicorner = v2snd . corners
 {-# INLINE shicorner #-}
 
--- | the lower corner of the box
+-- | the lower corner of a shape
 slocorner :: (Shape s, Fractional a, Ord a) => s a -> V3 a
 slocorner = v2fst . corners
 {-# INLINE slocorner #-}
@@ -129,7 +131,14 @@ data Box a = Box
   deriving anyclass (Hashable)
 
 -- | a box from the low and high corners
-boxfromcorners :: (Fractional a) => V3 a -> V3 a -> Box a
+boxfromcorners ::
+  (Fractional a) =>
+  -- | low corner
+  V3 a ->
+  -- | high corner
+  V3 a ->
+  -- | the box
+  Box a
 boxfromcorners l h = Box (h - l) ((h + l) ^/ 2)
 
 -- | a newtype over a 'Foldable' 'Functor' container of 'Box'es
@@ -169,6 +178,16 @@ _dimensions = lens dimensions \b d -> b {dimensions = d}
 _center :: Lens' (Box a) (V3 a)
 _center = lens center \b c -> b {center = c}
 {-# INLINE _center #-}
+
+-- | Lens for the lower corner of the box
+_lcorner :: (Fractional a) => Lens' (Box a) (V3 a)
+_lcorner = lens locorner \b l -> b {center = l + dimensions b ^/ 2}
+{-# INLINE _lcorner #-}
+
+-- | Lens for the higher corner of the box
+_hcorner :: (Fractional a) => Lens' (Box a) (V3 a)
+_hcorner = lens hicorner \b h -> b {center = h - dimensions b ^/ 2}
+{-# INLINE _hcorner #-}
 
 instance Shape Box where
   -- moving = displacement from t = 0 to t = 1
