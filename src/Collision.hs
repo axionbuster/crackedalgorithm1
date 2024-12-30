@@ -42,7 +42,7 @@ data Hit a = Hit
     -- a signum vector, so each component is either -1, 0, or 1
     hitnorm :: !(V3 a)
   }
-  deriving (Show, Eq, Generic, Typeable, Hashable, Data)
+  deriving (Show, Eq, Generic, Typeable, Hashable, Functor, Data)
 
 -- | existential 'Shape' type but where numeric type is erased
 data SomeShape1 a
