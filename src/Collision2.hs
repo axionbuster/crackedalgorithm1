@@ -127,14 +127,16 @@ resolve' =
       minimum_ . concat . Tr.traceShowId <$> for fps \fp ->
         -- shoot ray & break at first hit
         let raystart = scenter myself + (fromIntegral <$> fp)
-         in march raystart disp & fix \continuerm rm -> case rm of
+         in Tr.traceM ("raystart = " ++ show raystart ++ ", disp = " ++ show disp)
+              *>
+            march raystart disp & fix \continuerm rm -> case rm of
               -- this should be impossible
               [] -> pure []
               -- no hit
               (t, _, _) : _ | t > 1 -> Tr.traceM ("no hit at " ++ show t) *> pure []
               -- grid cubes, are there any blocks?
-              (_, _, Tr.traceShowId -> cubes) : rm' ->
-                cubes & fix \continuecb cb -> case cb of
+              (t, _, cubes) : rm' ->
+                (Tr.trace ("t = " ++ show t) cubes) & fix \continuecb cb -> case cb of
                   -- no more grid points, so no
                   [] -> continuerm rm'
                   -- let's check the block at the grid point

@@ -11,6 +11,29 @@ import Data.STRef.Lazy
 import Linear hiding (trace)
 import Prelude hiding (read)
 
+-- | convert negative zero to positive zero
+nonegzero :: (Fractional a, Ord a) => a -> a
+nonegzero x
+  | x == 0 && 1 / x < 0 = 0
+  | otherwise = x
+
+-- | apply Kahan's compensated sum to two numbers
+add ::
+  (Num a) =>
+  -- | compensator
+  a ->
+  -- | x
+  a ->
+  -- | y
+  a ->
+  -- | (x + y, compensator)
+  (a, a)
+add c x y =
+  let y' = y - c
+      u = x + y'
+      c' = u - x - y'
+   in (u, c')
+
 -- | march along a line segment, finding all intersections
 -- with grid squares or cubes (depending on the dimensionality)
 -- as well as the time it takes to reach each intersection
@@ -42,27 +65,32 @@ march ::
   f a ->
   -- | direction (no need to be normalized)
   f a ->
-  -- | list of (delta time, point, [grid point]) pairs
+  -- | list of (total time, point, [grid point]) pairs
   [(a, f a, [f Int])]
-march start direction = runST do
+march start (fmap nonegzero -> direction) = runST do
   let fi = fromIntegral :: Int -> a
       (!) = index
       new = newSTRef
       read = readSTRef
       write = writeSTRef
+      modify = modifySTRef
       lift2 f x y = tabulate @f \i -> f (x ! i) (y ! i)
       minimum_ = foldr1 \a b ->
         if
           | isNaN a -> b
           | isNaN b -> a
           | otherwise -> min a b -- if both are NaN, then pick either
-      sig = floor . signum <$> direction
+      sig = f . floor . signum <$> direction
+        where
+          f 0 = 1
+          f x = x
       -- round toward opposite direction of a signum component
       round_ (-1) = ceiling
       round_ 1 = floor
       round_ _ = floor -- direction is zero, so it doesn't matter
   cur <- new start
   com <- new $ tabulate @f (const 0) -- Kahan sum compensator
+  tot <- new (0, 0) -- (total time, compensator)
   fix \this -> do
     -- mechanism:
     -- using the parametric equation of the line segment
@@ -105,13 +133,6 @@ march start direction = runST do
         vadd v w = tabulate \i ->
           -- elementwise error-compensated vector addition
           add (com' ! i) (v ! i) (w ! i)
-          where
-            add c x y =
-              -- Kahan's compensated sum (x += y)
-              let y' = y - c
-                  u = x + y'
-                  c' = u - x - y'
-               in (u, c')
         -- update current position and compensator
         s = vadd cur' $ direction <&> (* tim)
         newcur = fst <$> s
@@ -122,9 +143,10 @@ march start direction = runST do
            in if eqtim $ fst $ times ! i
                 then fi $ round n
                 else n
+    tot' <- modify tot (\(x, c) -> add c x tim) *> fmap fst (read tot)
     write cur newcur'
     write com newcom
-    ((tim, newcur', gridcoordsf <&> ($ newcur')) :) <$> this
+    ((tot', newcur', gridcoordsf <&> ($ newcur')) :) <$> this
 {-# INLINEABLE march #-}
 {-# SPECIALIZE march :: V3 Double -> V3 Double -> [(Double, V3 Double, [V3 Int])] #-}
 {-# SPECIALIZE march :: V3 Float -> V3 Float -> [(Float, V3 Float, [V3 Int])] #-}
