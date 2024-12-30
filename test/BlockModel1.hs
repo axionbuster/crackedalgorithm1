@@ -1,7 +1,6 @@
 -- | block module for testing
 module BlockModel1 (Model (..), runBlockModel) where
 
-import Collision
 import Collision2
 import Data.Map.Strict (Map, lookup)
 import Effectful
@@ -10,11 +9,13 @@ import Effectful.State.Static.Local
 import Linear
 import Prelude hiding (lookup)
 
--- | block model
-newtype Model a = Model (Map (V3 Int) (Box a))
+-- | block model with the container type @f and numeric type @a
+--
+-- you could use, say Box or ManyBoxes for @f and Double for @a
+newtype Model f a = Model (Map (V3 Int) (f a))
   deriving stock (Show, Eq)
 
 -- | run 'GetBlock' effect
-runBlockModel :: Model n -> Eff (GetBlock f n : ef) a -> Eff ef a
+runBlockModel :: Model f n -> Eff (GetBlock f n : ef) a -> Eff ef a
 runBlockModel (Model m) = reinterpret (evalState m) \_ -> \case
   GetBlock i -> gets (lookup i)
