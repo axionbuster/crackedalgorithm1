@@ -10,15 +10,19 @@ where
 
 import Collision
 import Control.Lens hiding (index)
+import Control.Monad
 import Control.Monad.Fix
+import Data.Data
+import Data.Foldable
 import Data.Functor.Rep
 import Data.Kind
-import Data.List (minimumBy)
 import Data.Ord
 import Data.Traversable
 import Effectful
 import Effectful.Dispatch.Dynamic
+import Effectful.Exception
 import Face
+import GHC.Generics (Generic)
 import Linear
 import March
 
@@ -31,15 +35,23 @@ data Resolve a = Resolve
     -- | did it newly touch ground?
     restou :: !NewlyTouchingGround
   }
-  deriving (Show, Eq)
+  deriving (Show, Eq, Generic, Typeable)
+
+-- internal control-flow exception because i don't think i can use call/cc
+newtype EarlyExit a = EarlyExit (Resolve a)
+  deriving stock (Generic, Typeable)
+  deriving anyclass (Exception)
+
+instance Show (EarlyExit a) where
+  show _ = "EarlyExit"
 
 -- | newly touching ground?
 --
--- - If 'True', the object is newly touching the ground.
--- - If 'False' and the object was touching the ground, there is no saying.
--- - If 'False' and the object was not touching the ground, it's still not.
-newtype NewlyTouchingGround = NewlyTouchingGround {newonground :: Bool}
-  deriving newtype (Show, Eq, Ord, Enum, Bounded)
+-- - 'LT' means it is now not touching the ground
+-- - 'EQ' means it should maintain the previous state
+-- - 'GT' means it is now touching the ground
+newtype NewlyTouchingGround = NewlyTouchingGround {newonground :: Ordering}
+  deriving newtype (Show, Eq, Ord, Enum, Bounded, Generic, Typeable)
 
 -- | get a block's shape at integer coordinates (dynamic effect)
 data GetBlock (f :: Type -> Type) a :: Effect where
@@ -62,7 +74,7 @@ getblock = send . GetBlock
 
 -- | detect and resolve collision
 resolve ::
-  (Shape s, RealFloat n, Epsilon n, GetBlock s n :> ef) =>
+  (Shape s, RealFloat n, Epsilon n, Typeable n, GetBlock s n :> ef) =>
   -- | shape of the object who is moving
   s n ->
   -- | attempted displacement
@@ -72,14 +84,16 @@ resolve ::
   -- unless it got stuck, the new displacement should be zero
   Eff ef (Resolve n)
 resolve myself disp =
-  Resolve (scenter myself) disp (NewlyTouchingGround False)
-    & if nearZero disp then pure else resolve' myself
+  let res0 = Resolve (scenter myself) disp (NewlyTouchingGround EQ)
+   in catch
+        do res0 & if nearZero disp then pure else resolve' myself
+        do \(EarlyExit res1) -> pure res1
 {-# INLINE resolve #-}
 
 -- the actual implementation of 'resolve'
 resolve' ::
   forall s n ef.
-  (Shape s, RealFloat n, Epsilon n, GetBlock s n :> ef) =>
+  (Shape s, RealFloat n, Epsilon n, Typeable n, GetBlock s n :> ef) =>
   s n ->
   Resolve n ->
   Eff ef (Resolve n)
@@ -96,6 +110,16 @@ resolve' =
             V2 a b = fmap ceiling <$> corners myself
         minimum_ [] = Nothing
         minimum_ xs = Just $ minimumBy (comparing hittime) xs
+    -- if i'm currently in contact with something, i can freely
+    -- move in the direction of the displacement, as part of the
+    -- game physics
+    for_ fps do
+      getblock >=> \case
+        Just block
+          | intersecting myself block ->
+              -- i am indeed stuck, so i will just exit early
+              throwIO $ EarlyExit resolution
+        _ -> pure ()
     -- compute the times ("hits") at which the object will hit a block
     -- and then find the earliest hit
     mearliest <-
@@ -135,9 +159,7 @@ resolve' =
                         | Just hit <- hitting disp myself block ->
                             -- oh, we hit something
                             (short block ? checkbelow)
-                              <*> ( pure (hit :)
-                                      <*> continuerm rm'
-                                  )
+                              <*> ((hit :) <$> continuerm rm')
                         | otherwise ->
                             -- a block is there but we don't hit it
                             (short block ? checkbelow) <*> continuecb cb''
@@ -160,16 +182,19 @@ resolve' =
                   then 0 -- collision cancels out the displacement
                   else (1 - hittime earliest) * (disp ! i)
             respos = scenter myself + delta
-            restou = NewlyTouchingGround $ hitnorm earliest ^. _y > 0
-        -- do i collide with anything?
-        stuck <-
-          getblock (floor <$> respos) <&> \case
-            Just block -> intersecting myself block
-            Nothing -> False
-        Resolve {resdis, respos, restou}
+            restou =
+              NewlyTouchingGround $
+                if
+                  -- it hit downward -> newly touching ground
+                  | hitnorm earliest ^. _y > 0 -> GT
+                  -- it is not moving up or down -> no change
+                  | disp ^. _y == 0 -> EQ
+                  -- going up or down but no ground hit -> not touching ground
+                  | otherwise -> LT
+        Resolve {respos, resdis, restou}
           & if or collided
             && not (and collided)
-            && not (resdis == zero)
+            && (resdis /= zero)
             then
               continue $ translate respos myself
             else
