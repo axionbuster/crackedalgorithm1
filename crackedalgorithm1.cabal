@@ -94,6 +94,7 @@ test-suite crackedalgorithm1-test
   type: exitcode-stdio-1.0
   main-is: Spec.hs
   other-modules:
+      BlockModel1
       BoxSpec
       Collision2Spec
       Paths_crackedalgorithm1
@@ -118,6 +119,7 @@ test-suite crackedalgorithm1-test
   build-depends:
       adjunctions
     , base
+    , containers
     , crackedalgorithm1
     , effectful
     , hashable

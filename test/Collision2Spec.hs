@@ -2,11 +2,8 @@ module Collision2Spec (spec) where
 
 import Test.Hspec
 import Linear
-import Shape
-import Box
-import Data.Maybe
 import Collision
-import Collision2
+import Data.Maybe
 
 spec :: Spec
 spec = do
@@ -14,4 +11,5 @@ spec = do
     describe "resolve" do
       it "passes case 1" do
         let stone = error "stone block at 0, 43, 1"
-            zombie = ManyBoxes [] (Box (V3 0.5 ))
+            zombie = ManyBoxes [Box (V3 0.5 0 0) (V3 1 1 1)]
+         in error "not implemented" `shouldBe` "implemented"

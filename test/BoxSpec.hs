@@ -2,8 +2,7 @@ module BoxSpec (spec) where
 
 import Test.Hspec
 import Linear
-import Shape
-import Box
+import Collision
 import Data.Maybe
 
 boxd :: V3 Double -> V3 Double -> Box Double

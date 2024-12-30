@@ -22,10 +22,10 @@ description:         Please see the README on GitHub at <https://github.com/gith
 dependencies:
 - adjunctions
 - base
+- effectful
+- hashable
 - lens
 - linear
-- hashable
-- effectful
 
 language:   GHC2021
 
@@ -80,3 +80,5 @@ tests:
     dependencies:
     - crackedalgorithm1
     - hspec
+    - containers
+    - linear

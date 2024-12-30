@@ -25,6 +25,7 @@ import Data.Foldable
 import Data.Functor.Rep
 import Data.Maybe
 import Linear
+import GHC.Generics (Generic)
 
 -- | a collision resolution data type
 data Hit a = Hit
@@ -39,7 +40,7 @@ data Hit a = Hit
     -- a signum vector, so each component is either -1, 0, or 1
     hitnorm :: !(V3 a)
   }
-  deriving (Show)
+  deriving (Show, Eq, Generic, Typeable)
 
 -- | existential 'Shape' type but where numeric type is erased
 data SomeShape1 a
@@ -122,12 +123,16 @@ data Box a = Box
     -- | the center of the box
     center :: !(V3 a)
   }
-  deriving stock (Show)
+  deriving stock (Show, Eq, Generic, Typeable)
 
 -- | a newtype over a 'Foldable' 'Functor' container of 'Box'es
 --
 -- the low and high corners are those of the smallest bounding box
 newtype ManyBoxes f a = ManyBoxes (f (Box a))
+  deriving stock (Generic, Typeable)
+
+instance (Eq (f (Box a))) => Eq (ManyBoxes f a) where
+  ManyBoxes a == ManyBoxes b = a == b
 
 instance (Functor f) => Functor (ManyBoxes f) where
   fmap f (ManyBoxes boxes) = ManyBoxes $ fmap g boxes
