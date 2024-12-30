@@ -99,8 +99,8 @@ march start (fmap nonegzero -> direction) = runST do
       round_ 1 = floor
       round_ _ = error "signum neither -1 nor 1"
   cur <- new start
-  com <- new $ tabulate @f (const 0) -- Kahan sum compensator
-  tot <- new (0, 0) -- (compensator, total time)
+  com <- new $ tabulate @f (const 0) -- Kahan sum compensator for cur
+  tot <- new (0, 0) -- (total time, compensator)
   fix \this -> do
     -- mechanism:
     -- using the parametric equation of the line segment
