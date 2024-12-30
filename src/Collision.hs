@@ -24,9 +24,10 @@ import Control.Monad.Zip
 import Data.Data
 import Data.Foldable
 import Data.Functor.Rep
+import Data.Hashable
 import Data.Maybe
-import Linear
 import GHC.Generics (Generic)
+import Linear
 
 -- | a collision resolution data type
 data Hit a = Hit
@@ -41,7 +42,7 @@ data Hit a = Hit
     -- a signum vector, so each component is either -1, 0, or 1
     hitnorm :: !(V3 a)
   }
-  deriving (Show, Eq, Generic, Typeable)
+  deriving (Show, Eq, Generic, Typeable, Hashable, Data)
 
 -- | existential 'Shape' type but where numeric type is erased
 data SomeShape1 a
@@ -124,7 +125,8 @@ data Box a = Box
     -- | the center of the box
     center :: !(V3 a)
   }
-  deriving stock (Show, Eq, Generic, Typeable)
+  deriving stock (Show, Eq, Generic, Typeable, Functor, Data)
+  deriving anyclass (Hashable)
 
 -- | a box from the low and high corners
 boxfromcorners :: (Fractional a) => V3 a -> V3 a -> Box a
@@ -136,21 +138,37 @@ boxfromcorners l h = Box (h - l) ((h + l) ^/ 2)
 newtype ManyBoxes f a = ManyBoxes (f (Box a))
   deriving stock (Generic, Typeable)
 
+deriving stock instance
+  (Typeable f, Typeable a, Data (f (Box a))) =>
+  Data (ManyBoxes f a)
+
 instance (Eq (f (Box a))) => Eq (ManyBoxes f a) where
   ManyBoxes a == ManyBoxes b = a == b
+  {-# INLINE (==) #-}
+
+instance (Ord (f (Box a))) => Ord (ManyBoxes f a) where
+  compare (ManyBoxes a) (ManyBoxes b) = compare a b
+  {-# INLINE compare #-}
 
 instance (Functor f) => Functor (ManyBoxes f) where
   fmap f (ManyBoxes boxes) = ManyBoxes $ fmap g boxes
     where
       g (Box d c) = Box (f <$> d) (f <$> c)
+  {-# INLINE fmap #-}
+
+instance (Hashable (f (Box a))) => Hashable (ManyBoxes f a) where
+  hashWithSalt s (ManyBoxes boxes) = hashWithSalt s boxes
+  {-# INLINE hashWithSalt #-}
 
 -- | Lens for the dimensions of the box
 _dimensions :: Lens' (Box a) (V3 a)
 _dimensions = lens dimensions \b d -> b {dimensions = d}
+{-# INLINE _dimensions #-}
 
 -- | Lens for the center of the box
 _center :: Lens' (Box a) (V3 a)
 _center = lens center \b c -> b {center = c}
+{-# INLINE _center #-}
 
 instance Shape Box where
   -- moving = displacement from t = 0 to t = 1

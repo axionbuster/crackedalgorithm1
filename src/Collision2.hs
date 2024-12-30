@@ -51,7 +51,7 @@ data Resolve a = Resolve
     -- | did it newly touch ground?
     restou :: !NewlyTouchingGround
   }
-  deriving (Show, Eq, Generic, Typeable, Functor, Hashable)
+  deriving (Show, Eq, Generic, Typeable, Functor, Hashable, Data)
 
 -- | \'upgrade\' a boolean: find @y@ as in @y CMP x || y == x@
 --
@@ -91,7 +91,8 @@ instance Show (EarlyExit a) where
 -- - 'EQ' means it should maintain the previous state
 -- - 'GT' means it is now touching the ground
 newtype NewlyTouchingGround = NewlyTouchingGround {newonground :: Ordering}
-  deriving newtype (Show, Eq, Ord, Enum, Bounded, Generic, Typeable, Hashable)
+  deriving newtype (Show, Eq, Ord, Enum, Bounded, Hashable)
+  deriving stock (Data, Generic, Typeable)
 
 -- | get a block's shape at integer coordinates (dynamic effect)
 data GetBlock (f :: Type -> Type) a :: Effect where
