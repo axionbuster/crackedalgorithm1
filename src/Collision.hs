@@ -9,6 +9,7 @@ module Collision
     ManyBoxes (..),
     _dimensions,
     _center,
+    boxfromcorners,
     castshape1,
     boxzero,
     hicorner,
@@ -124,6 +125,10 @@ data Box a = Box
     center :: !(V3 a)
   }
   deriving stock (Show, Eq, Generic, Typeable)
+
+-- | a box from the low and high corners
+boxfromcorners :: (Fractional a) => V3 a -> V3 a -> Box a
+boxfromcorners l h = Box (h - l) ((h + l) ^/ 2)
 
 -- | a newtype over a 'Foldable' 'Functor' container of 'Box'es
 --
