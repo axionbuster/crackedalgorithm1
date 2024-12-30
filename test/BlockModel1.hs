@@ -1,5 +1,5 @@
 -- | block module for testing
-module BlockModel1 where
+module BlockModel1 (Model (..), runBlockModel) where
 
 import Collision
 import Collision2
@@ -13,6 +13,7 @@ import Prelude hiding (lookup)
 newtype Model = Model (Map (V3 Int) (Box Double))
   deriving stock (Show, Eq)
 
+-- | run 'GetBlock' effect
 runBlockModel :: Model -> Eff (GetBlock f n : ef) a -> Eff ef a
 runBlockModel (Model m) = reinterpret (evalState m) \_ -> \case
   GetBlock i -> gets (lookup i)
