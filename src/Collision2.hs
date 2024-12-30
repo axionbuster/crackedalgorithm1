@@ -25,7 +25,6 @@ import Face
 import GHC.Generics (Generic)
 import Linear
 import March
-import Debug.Trace qualified as Tr
 
 -- | collision resolution data type
 data Resolve a = Resolve
@@ -75,7 +74,7 @@ getblock = send . GetBlock
 
 -- | detect and resolve collision
 resolve ::
-  (Shape s, Show n, RealFloat n, Epsilon n, Typeable n, GetBlock s n :> ef) =>
+  (Shape s, RealFloat n, Epsilon n, Typeable n, GetBlock s n :> ef) =>
   -- | shape of the object who is moving
   s n ->
   -- | attempted displacement
@@ -88,13 +87,13 @@ resolve myself disp =
   let res0 = Resolve (scenter myself) disp (NewlyTouchingGround EQ)
    in catch
         do res0 & if nearZero disp then pure else resolve' myself
-        do \(e@(EarlyExit res1)) -> Tr.traceM (show e) *> pure res1
+        do \(EarlyExit res1) -> pure res1
 {-# INLINE resolve #-}
 
 -- the actual implementation of 'resolve'
 resolve' ::
   forall s n ef.
-  (Shape s, Show n, RealFloat n, Epsilon n, Typeable n, GetBlock s n :> ef) =>
+  (Shape s, RealFloat n, Epsilon n, Typeable n, GetBlock s n :> ef) =>
   s n ->
   Resolve n ->
   Eff ef (Resolve n)
@@ -124,19 +123,17 @@ resolve' =
     -- compute the times ("hits") at which the object will hit a block
     -- and then find the earliest hit
     mearliest <-
-      minimum_ . concat . Tr.traceShowId <$> for fps \fp ->
+      minimum_ . concat <$> for fps \fp ->
         -- shoot ray & break at first hit
         let raystart = scenter myself + (fromIntegral <$> fp)
-         in Tr.traceM ("raystart = " ++ show raystart ++ ", disp = " ++ show disp)
-              *>
-            march raystart disp & fix \continuerm rm -> case rm of
+         in march raystart disp & fix \continuerm rm -> case rm of
               -- this should be impossible
               [] -> pure []
               -- no hit
-              (t, _, _) : _ | t > 1 -> Tr.traceM ("no hit at " ++ show t) *> pure []
+              (t, _, _) : _ | t > 1 -> pure []
               -- grid cubes, are there any blocks?
-              (t, _, cubes) : rm' ->
-                (Tr.trace ("t = " ++ show t) cubes) & fix \continuecb cb -> case cb of
+              (_, _, cubes) : rm' ->
+                cubes & fix \continuecb cb -> case cb of
                   -- no more grid points, so no
                   [] -> continuerm rm'
                   -- let's check the block at the grid point
@@ -168,7 +165,7 @@ resolve' =
                             (short block ? checkbelow) <*> continuecb cb''
                       -- no block at the grid point
                       Nothing -> checkbelow <*> continuecb cb''
-    case Tr.trace ("mearliest = " ++ show mearliest) mearliest of
+    case mearliest of
       Nothing ->
         -- no collision
         pure resolution
