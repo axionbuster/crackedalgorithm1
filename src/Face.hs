@@ -10,7 +10,13 @@ import Text.Printf
 
 -- | retrieve the points on the faces of a cuboid
 -- normal to a certain direction (sig: {-1, 0, 1}) from said cuboid
-facepoints :: V3 Int -> V3 Int -> [V3 Int]
+facepoints ::
+  -- | cuboid dimensions
+  V3 Int ->
+  -- | direction (signum vector)
+  V3 Int ->
+  -- | points on the faces from the cuboid's (0, 0, 0) corner
+  [V3 Int]
 facepoints coid sig =
   let (!) = index
       -- enumerate points on the faces of the cuboid
@@ -57,7 +63,13 @@ dbgdesmos vs = "[" ++ intercalate "," (f <$> vs) ++ "]"
     f (V3 x y z) = printf "(%s,%s,%s)" (show x) (show y) (show z)
 
 -- | predict the number of points sampled by 'facepoints'
-dbgcountfacepoints :: V3 Int -> V3 Int -> Int
+dbgcountfacepoints ::
+  -- | cuboid dimensions
+  V3 Int ->
+  -- | direction (signum vector)
+  V3 Int ->
+  -- | number of points sampled by 'facepoints'
+  Int
 dbgcountfacepoints ((+ pure 1) -> coid) sig =
   let (!) = index
       c ? a = if c then a else 0
