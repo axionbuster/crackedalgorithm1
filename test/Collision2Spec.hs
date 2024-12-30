@@ -28,11 +28,7 @@ spec = do
   describe "internal" do
     describe "genericzombie" do
       it "works" do
-        genericzombie zero
-          `shouldBe` Box
-            { dimensions = V3 0.6 1.95 0.6,
-              center = V3 0.3 0.975 0.3
-            }
+        corners (genericzombie zero) `shouldBe` V2 zero (V3 0.6 1.95 0.6)
   describe "Collision2" do
     describe "resolve" do
       it "passes case 1" do
