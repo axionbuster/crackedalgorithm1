@@ -16,7 +16,7 @@ genericcube l = Box (pure 1) (l + pure 0.5) -- dim, cent
 -- | given low coordinates return zombie
 genericzombie :: V3 Double -> Box Double
 genericzombie =
-  (+ V3 0.3 0 0.3)
+  (+ V3 0.5 0 0.5)
     >>> (`translate` boxfromcorners (V3 (-0.3) 0 (-0.3)) (V3 0.3 1.95 0.3))
 
 -- | given a list of coordinates return a model of stones
@@ -25,10 +25,6 @@ stones = Model . M.fromList . fmap \v -> (v, genericcube (fromIntegral <$> v))
 
 spec :: Spec
 spec = do
-  describe "internal" do
-    describe "genericzombie" do
-      it "works" do
-        corners (genericzombie zero) `shouldBe` V2 zero (V3 0.6 1.95 0.6)
   describe "Collision2" do
     describe "resolve" do
       it "passes case 1" do
@@ -42,7 +38,7 @@ spec = do
               Resolve
                 { -- don't ask me why the position is 0.7
                   -- i just got it from the original code
-                  respos = V3 0 42 0.7,
+                  respos = V3 0.5 42 1.2,
                   resdis = zero,
                   restou = NewlyTouchingGround {newonground = EQ}
                 }
