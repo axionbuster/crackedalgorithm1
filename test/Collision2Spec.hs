@@ -20,6 +20,10 @@ genericzombie = (`translate` Box (V3 0.6 1.95 0.6) (V3 0.3 0.975 0.3))
 stones :: [V3 Int] -> Model Box Double
 stones = Model . M.fromList . fmap \v -> (v, genericcube (fromIntegral <$> v))
 
+-- | run an effect with a model
+run :: Model f n -> Eff (GetBlock f n : '[]) a -> a
+run = (runPureEff .) . runBlockModel
+
 spec :: Spec
 spec = do
   describe "Collision2" do
@@ -28,14 +32,9 @@ spec = do
         let model = stones [V3 0 43 1]
             zombie = genericzombie (V3 0 42 0)
             disp = V3 0 0 10
-            e = runPureEff . runBlockModel model $ resolve zombie disp
-         in e
-              `shouldBe`
-              -- dummy resolve
-              Resolve
-                { -- don't ask me why the position is 0.7
-                  -- i just got it from the original code
-                  respos = V3 0.3 42.975 0.7,
+         in run model (resolve zombie disp)
+              `shouldBe` Resolve
+                { respos = V3 0.3 42.975 0.7,
                   resdis = zero,
                   restou = NewlyTouchingGround {newonground = EQ}
                 }
