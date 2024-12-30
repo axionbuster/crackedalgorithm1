@@ -47,6 +47,8 @@ data Hit a = Hit
   deriving (Show, Eq, Generic, Typeable, Hashable, Functor, Data)
 
 -- | existential 'Shape' type but where numeric type is erased
+--
+-- see also: 'castshape1'
 data SomeShape1 a
   = forall s.
     ( Typeable (s a),
