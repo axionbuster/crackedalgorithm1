@@ -12,10 +12,12 @@ import Linear hiding (trace)
 import Prelude hiding (read)
 
 -- | convert negative zero to positive zero
-nonegzero :: (Fractional a, Ord a) => a -> a
-nonegzero x
-  | x == 0 && 1 / x < 0 = 0
-  | otherwise = x
+nonegzero :: (RealFloat a) => a -> a
+nonegzero x | isNegativeZero x = 0 -- positive zero
+nonegzero x = x
+
+isfinite :: (RealFloat a) => a -> Bool
+isfinite x = not (isNaN x || isInfinite x)
 
 -- | apply Kahan's compensated sum to two numbers
 add ::
@@ -67,6 +69,8 @@ march ::
   f a ->
   -- | list of (total time, point, [grid point]) pairs
   [(a, f a, [f Int])]
+march _ direction | any (not . isfinite) direction = []
+march _ direction | all nearZero direction = []
 march start (fmap nonegzero -> direction) = runST do
   let fi = fromIntegral :: Int -> a
       (!) = index
@@ -106,6 +110,9 @@ march start (fmap nonegzero -> direction) = runST do
           -- solve for time to next intersection in dimension i
           ( -- the time
             let r = round_ $ sig ! i
+                -- this expression is carefully designed so that if the
+                -- direction is zero in this dimension it the time will be
+                -- positive Infinity, never negative Infinity
                 u = fi (r (cur' ! i) + sig ! i) - cur' ! i
              in u / direction ! i,
             -- grid point (compute from later-determined cur value)
