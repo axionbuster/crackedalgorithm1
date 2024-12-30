@@ -268,10 +268,6 @@ hicorner (Box d c) = c + d ^/ 2
 instance (Show (f (Box a))) => Show (ManyBoxes f a) where
   show (ManyBoxes boxes) = show boxes
 
--- a design flaw is that ManyBoxes f is not a Functor or Foldable
--- so downstream code will need to hard-code ManyBoxes
--- which means that no one can use any other method of detecting collisions
--- except for this Shape instance for ManyBoxes
 instance (Functor f, Foldable f) => Shape (ManyBoxes f) where
   -- find the first hitting collision
   hitting moving (ManyBoxes these) (ManyBoxes those) =
