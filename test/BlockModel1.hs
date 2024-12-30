@@ -5,6 +5,7 @@ import Collision
 import Collision2
 import Data.Map.Strict (Map, lookup)
 import Effectful
+import Effectful.Dispatch.Dynamic
 import Effectful.State.Static.Local
 import Linear
 import Prelude hiding (lookup)
