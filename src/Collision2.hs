@@ -126,21 +126,21 @@ resolve' =
       minimum_ . concat <$> for fps \fp ->
         -- shoot ray & break at first hit
         let raystart = scenter myself + (fromIntegral <$> fp)
-         in march raystart disp & fix \continuerm rm -> case rm of
+         in march raystart disp & fix \continuerm -> \case
               -- this should be impossible
               [] -> pure []
               -- no hit
               (t, _, _) : _ | t > 1 -> pure []
               -- grid cubes, are there any blocks?
-              (_, _, cubes) : rm' ->
-                cubes & fix \continuecb cb -> case cb of
+              (_, _, cubes) : rm ->
+                cubes & fix \continuecb -> \case
                   -- no more grid points, so no
-                  [] -> continuerm rm'
+                  [] -> continuerm rm
                   -- let's check the block at the grid point
-                  cb' : cb'' -> do
+                  cb : cb' -> do
                     let checkbelow =
                           -- go below and check too
-                          getblock (cb' - V3 0 1 0) <&> \case
+                          getblock (cb - V3 0 1 0) <&> \case
                             Just blockbelow
                               | Just hitbelow <-
                                   hitting disp myself blockbelow ->
@@ -152,19 +152,19 @@ resolve' =
                     -- check if the block at the grid point exists & is solid
                     -- also just in case a tall block (like a fence)
                     -- is there, we check the block below it
-                    getblock cb' >>= \case
+                    getblock cb >>= \case
                       Just block
                         -- note: ray location and myself location
                         -- are independent of each other
                         | Just hit <- hitting disp myself block ->
                             -- oh, we hit something
                             (short block ? checkbelow)
-                              <*> ((hit :) <$> continuerm rm')
+                              <*> ((hit :) <$> continuerm rm)
                         | otherwise ->
                             -- a block is there but we don't hit it
-                            (short block ? checkbelow) <*> continuecb cb''
+                            (short block ? checkbelow) <*> continuecb cb'
                       -- no block at the grid point
-                      Nothing -> checkbelow <*> continuecb cb''
+                      Nothing -> checkbelow <*> continuecb cb'
     case mearliest of
       Nothing ->
         -- no collision
