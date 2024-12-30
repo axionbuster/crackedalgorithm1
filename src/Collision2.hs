@@ -1,8 +1,22 @@
 -- | "effectful" collision detection and resolution
+--
+-- = Parts
+--
+-- 1. The 'GetBlock' effect
+-- 2. The 'Resolve' data type and 'resolve' function (the main part)
+-- 3. The 'NewlyTouchingGround' data type and 'updonground' function
+--
+-- = Usage
+--
+-- 1. Use 'getblock' to get a block's shape at integer coordinates
+-- 2. Use 'resolve' to detect and resolve collision
+-- 3. Use 'updonground' to update the on-ground status (from \#2)
 module Collision2
   ( GetBlock (..),
     Resolve (..),
     NewlyTouchingGround (..),
+    boolupgr,
+    updonground,
     getblock,
     resolve,
   )
@@ -12,9 +26,11 @@ import Collision
 import Control.Lens hiding (index)
 import Control.Monad
 import Control.Monad.Fix
+import Data.Coerce
 import Data.Data
 import Data.Foldable
 import Data.Functor.Rep
+import Data.Hashable
 import Data.Kind
 import Data.Ord
 import Data.Traversable
@@ -35,7 +51,31 @@ data Resolve a = Resolve
     -- | did it newly touch ground?
     restou :: !NewlyTouchingGround
   }
-  deriving (Show, Eq, Generic, Typeable)
+  deriving (Show, Eq, Generic, Typeable, Functor, Hashable)
+
+-- | \'upgrade\' a boolean: find @y@ as in @y CMP x || y == x@
+--
+-- used to implement 'updonground'
+boolupgr ::
+  -- | comparison (@CMP@)
+  Ordering ->
+  -- | the @x@
+  Bool ->
+  -- | left-hand side of the @CMP@ comparison
+  Bool
+boolupgr LT True = False
+boolupgr LT False = False
+boolupgr EQ x = x
+boolupgr GT True = True
+boolupgr GT False = True
+{-# INLINE boolupgr #-}
+
+-- | \'update\' the on-ground status
+--
+-- implemented using 'boolupgr'
+updonground :: NewlyTouchingGround -> Bool -> Bool
+updonground = coerce boolupgr
+{-# INLINE updonground #-}
 
 -- internal control-flow exception because i don't think i can use call/cc
 newtype EarlyExit a = EarlyExit (Resolve a)
@@ -51,7 +91,7 @@ instance Show (EarlyExit a) where
 -- - 'EQ' means it should maintain the previous state
 -- - 'GT' means it is now touching the ground
 newtype NewlyTouchingGround = NewlyTouchingGround {newonground :: Ordering}
-  deriving newtype (Show, Eq, Ord, Enum, Bounded, Generic, Typeable)
+  deriving newtype (Show, Eq, Ord, Enum, Bounded, Generic, Typeable, Hashable)
 
 -- | get a block's shape at integer coordinates (dynamic effect)
 data GetBlock (f :: Type -> Type) a :: Effect where
