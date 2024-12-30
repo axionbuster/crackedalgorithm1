@@ -92,8 +92,6 @@ class Shape s where
 
   -- | convert a 'Shape' to a 'ManyBoxes' of 'Box'es with a list container,
   -- which is a canonical form for 'ManyBoxes'
-  --
-  -- 'Shape' is a related type class
   tomanyboxes :: s a -> ManyBoxes [] a
 
   -- | the center of the shape
