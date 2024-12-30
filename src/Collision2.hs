@@ -127,7 +127,8 @@ resolve' =
         -- shoot ray & break at first hit
         let raystart = scenter myself + (fromIntegral <$> fp)
          in march raystart disp & fix \continuerm -> \case
-              -- this should be impossible
+              -- some improper displacements can cause termination
+              -- of ray marching (which should normally be infinite)
               [] -> pure []
               -- no hit
               (t, _, _) : _ | t > 1 -> pure []
