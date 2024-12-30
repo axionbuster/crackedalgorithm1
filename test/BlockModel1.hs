@@ -11,10 +11,10 @@ import Linear
 import Prelude hiding (lookup)
 
 -- | block model
-newtype Model = Model (Map (V3 Int) (Box Double))
+newtype Model a = Model (Map (V3 Int) (Box a))
   deriving stock (Show, Eq)
 
 -- | run 'GetBlock' effect
-runBlockModel :: Model -> Eff (GetBlock f n : ef) a -> Eff ef a
+runBlockModel :: Model n -> Eff (GetBlock f n : ef) a -> Eff ef a
 runBlockModel (Model m) = reinterpret (evalState m) \_ -> \case
   GetBlock i -> gets (lookup i)
