@@ -16,7 +16,7 @@ genericcube l = Box (pure 1) (l + pure 0.5) -- dim, cent
 -- | given low coordinates return zombie
 genericzombie :: V3 Double -> Box Double
 genericzombie =
-  (+ V3 0.5 0 0.5)
+  (+ V3 0.5 (-0.975) 0.5)
     >>> (`translate` boxfromcorners (V3 (-0.3) 0 (-0.3)) (V3 0.3 1.95 0.3))
 
 -- | given a list of coordinates return a model of stones
