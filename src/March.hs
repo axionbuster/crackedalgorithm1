@@ -20,15 +20,15 @@ nonegzero x
 -- | apply Kahan's compensated sum to two numbers
 add ::
   (Num a) =>
-  -- | compensator
-  a ->
   -- | x
   a ->
   -- | y
   a ->
+  -- | compensator
+  a ->
   -- | (x + y, compensator)
   (a, a)
-add c x y =
+add x y c =
   let y' = y - c
       u = x + y'
       c' = u - x - y'
@@ -82,15 +82,18 @@ march start (fmap nonegzero -> direction) = runST do
           | otherwise -> min a b -- if both are NaN, then pick either
       sig = f . floor . signum <$> direction
         where
+          -- for difficult-to-explain reasons, you need to give a stationary (0)
+          -- displacement component a fake signum of +1 in order to avoid
+          -- getting -Infinity when it shouldn't
           f 0 = 1
           f x = x
       -- round toward opposite direction of a signum component
       round_ (-1) = ceiling
       round_ 1 = floor
-      round_ _ = floor -- direction is zero, so it doesn't matter
+      round_ _ = error "signum neither -1 nor 1"
   cur <- new start
   com <- new $ tabulate @f (const 0) -- Kahan sum compensator
-  tot <- new (0, 0) -- (total time, compensator)
+  tot <- new (0, 0) -- (compensator, total time)
   fix \this -> do
     -- mechanism:
     -- using the parametric equation of the line segment
@@ -132,7 +135,7 @@ march start (fmap nonegzero -> direction) = runST do
         gridcoordsf = fmap snd $ filter (eqtim . fst) $ toList times
         vadd v w = tabulate \i ->
           -- elementwise error-compensated vector addition
-          add (com' ! i) (v ! i) (w ! i)
+          add (v ! i) (w ! i) (com' ! i)
         -- update current position and compensator
         s = vadd cur' $ direction <&> (* tim)
         newcur = fst <$> s
@@ -143,7 +146,8 @@ march start (fmap nonegzero -> direction) = runST do
            in if eqtim $ fst $ times ! i
                 then fi $ round n
                 else n
-    tot' <- modify tot (\(x, c) -> add c x tim) *> fmap fst (read tot)
+    -- update total time with compensated sum
+    tot' <- modify tot (uncurry (add tim)) *> fmap fst (read tot)
     write cur newcur'
     write com newcom
     ((tot', newcur', gridcoordsf <&> ($ newcur')) :) <$> this
