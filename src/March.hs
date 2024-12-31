@@ -51,16 +51,24 @@ data I f a = I
 --
 -- the cubes are represented by their low corner coordinates
 --
--- in 2D, when a point is intersected, it will return the two squares
--- that are intersected by the line segment. so note that it doesn't
--- include the diagonal square
+-- in 2D, when a point is intersected, the two squares about
+-- the point that the line (that extends rhe ray) does NOT
+-- intersect will be included. it's because this routine is used
+-- for collision detection
 --
--- in 3D, it will return three cubes in the same way. no diagonal cube
+-- in 3D, there are many edge cases, but generally only the cubes
+-- needed for collision detection are returned. so about
+-- a corner, three cubes will be returned; abour an edge,
+-- two (assuming ray is not parallel to a coordinate plane)
 --
--- a compensated sum is used to reduce floating point error
+-- a compensated sum is used to reduce floating point error.
+-- the compensation applies to the coordinates and times
 --
 -- the returned list being infinite, it is recommended to
 -- use 'take' to limit the number of points to be computed
+--
+-- the starting point is included (and is the head of the list).
+-- it has time equal to zero
 --
 -- if the direction is (near) zero, or if any component of the
 -- direction is not finite, then the function will return an empty list
