@@ -265,7 +265,5 @@ resolve' =
           & if or collided
             && not (and collided)
             && (resdis /= zero)
-            then
-              cont $ translate respos myself
-            else
-              pure
+            then cont $ translate respos myself
+            else pure
