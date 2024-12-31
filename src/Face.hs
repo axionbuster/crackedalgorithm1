@@ -1,4 +1,4 @@
--- | a mysterious module that apparently samples points on the face of a coid
+-- | sample points on the face of a cuboid against a direction
 module Face (facepoints, dbgcountfacepoints, dbgdesmos) where
 
 import Control.Lens hiding (index)
