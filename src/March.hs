@@ -38,10 +38,14 @@ add x y c =
 
 -- | intermediate data structure for 'march'
 data I f a = I
-  { itim :: a,
-    icur :: f a,
-    icom :: f a,
-    igrid :: [f Int]
+  { -- | delta time to next intersection
+    itim :: !a,
+    -- | new current position
+    icur :: !(f a),
+    -- | compensator for 'icur'
+    icom :: !(f a),
+    -- | grid points intersected
+    igrid :: !([f Int])
   }
 
 -- | march along a line segment, finding all intersections
