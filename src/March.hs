@@ -123,7 +123,7 @@ march start (fmap nonegzero -> direction) = runST do
         let roundedv = tabulate \j -> round_ (-(sig' ! j)) (v ! j)
          in lift2 (-) roundedv (max 0 <$> sig') & el i +~ sig' ! i
   ftm <- new True -- first time marker
-  cur <- new start
+  cur <- new start -- current position
   com <- new $ tabulate $ const 0 -- Kahan sum compensator for cur
   tot <- new (0, 0) -- (total time, compensator)
   fix \this -> do
@@ -131,7 +131,6 @@ march start (fmap nonegzero -> direction) = runST do
     -- using the parametric equation of the line segment
     -- find the closest intersection with the grid -> get 'time' value
     -- then use the 'time' to get the coordinates of the intersection
-    -- 'current' location and compensator
     com' <- read com
     cur' <- read cur
     (sig', dir) <-
@@ -182,7 +181,8 @@ march start (fmap nonegzero -> direction) = runST do
     ftm' <- read ftm
     if ftm'
       then do
-        -- the direction will be reset as we go forward
+        -- first time = reverse direction
+        -- after that the direction will be reset as we go forward
         write ftm False
         -- negate the time so that next time we add it back it becomes 0
         modify tot (\(x, y) -> (x * (-1), y * (-1)))
