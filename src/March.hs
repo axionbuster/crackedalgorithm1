@@ -140,6 +140,7 @@ march start (fmap nonegzero -> direction) = runST do
         -- means to add 1 to the sig component -> hence max 0
         let roundedv = tabulate \j -> round_ (-(sig ! j)) (v ! j)
          in lift2 (-) roundedv (max 0 <$> sig) & el i +~ sig ! i
+      -- 'inter' is the main loop logic
       inter sig dir com cur =
         -- mechanism:
         -- using the parametric equation of the line
@@ -184,6 +185,7 @@ march start (fmap nonegzero -> direction) = runST do
     write tot (-itim, 0)
     write cur icur
     write com icom
+  -- loop
   fix \this -> do
     let sig = computesig direction
     I {itim, icur, icom, igrid} <- inter sig direction <$> read com <*> read cur
