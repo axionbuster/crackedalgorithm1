@@ -210,7 +210,7 @@ resolve' =
                               (hitbelow :)
                         _ -> id
                     True ? action = action
-                    False ? _ = pure id
+                    _ ? _ = pure id
                     short b = shicorner b ^. _y < 0.5
                 -- check if the block at the grid point exists & is solid
                 -- also just in case a tall block (like a fence)
