@@ -17,6 +17,9 @@ genericcube l = Box (pure 1) (l + pure 0.5) -- dim, cent
 genericzombie :: V3 Double -> Box Double
 genericzombie = (`translate` Box (V3 0.6 1.95 0.6) (V3 0.3 0.975 0.3))
 
+zombiebycenter :: V3 Double -> Box Double
+zombiebycenter = Box (V3 0.6 1.95 0.6)
+
 -- | get the center of a zombie with the given low coordinates
 zomtr :: V3 Double -> V3 Double
 zomtr = (+ V3 0.3 0.975 0.3)
@@ -66,7 +69,7 @@ spec = do
               `shouldBe` Resolve
                 { -- zombie is stuck because it is overlapping with the stone
                   respos = zomtr $ V3 0 42 0.9,
-                  resdis = disp, -- caller can decide it will move
+                  resdis = disp, -- so it can unstuck itself
                   restou = NewlyTouchingGround {newonground = EQ}
                 }
       it "does well with slabs" do
@@ -76,6 +79,17 @@ spec = do
          in run model (resolve zombie disp)
               `shouldBe` Resolve
                 { respos = zomtr $ V3 0 0.5 0,
+                  resdis = zero,
+                  -- it touches the ground so it should say GT
+                  restou = NewlyTouchingGround {newonground = GT}
+                }
+      it "slams and slides" do
+        let model = stones [V3 0 0 0]
+            zombie = zombiebycenter (V3 1.112 1.998 0)
+            disp = V3 0.273 (-0.0784) 0
+         in run model (resolve zombie disp)
+              `shouldBe` Resolve
+                { respos = V3 1.385 1.975 0,
                   resdis = zero,
                   restou = NewlyTouchingGround {newonground = GT}
                 }
