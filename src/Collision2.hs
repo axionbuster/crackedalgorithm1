@@ -237,10 +237,8 @@ resolve' =
               resdis = zero,
               restou =
                 if disp ^. _y > 0
-                  then
-                    NewlyTouchingGround LT
-                  else
-                    restou resolution
+                  then NewlyTouchingGround LT
+                  else restou resolution
             }
       Just earliest -> do
         -- now correct the displacement; advance position
