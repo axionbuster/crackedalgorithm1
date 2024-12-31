@@ -37,7 +37,6 @@ import Data.Hashable
 import Data.Kind
 import Data.Ord
 import Data.Traversable
-import Debug.Trace qualified as Tr
 import Effectful
 import Effectful.Dispatch.Dynamic
 import Effectful.Exception
@@ -134,7 +133,7 @@ getblock = send . GetBlock
 
 -- | detect and resolve collision
 resolve ::
-  (Shape s, RealFloat n, Epsilon n, Typeable n, Show n, GetBlock s n :> ef) =>
+  (Shape s, RealFloat n, Epsilon n, Typeable n, GetBlock s n :> ef) =>
   -- | shape of the object who is moving
   s n ->
   -- | attempted displacement
@@ -153,7 +152,7 @@ resolve myself disp =
 -- the actual implementation of 'resolve'
 resolve' ::
   forall s n ef.
-  (Shape s, RealFloat n, Epsilon n, Typeable n, Show n, GetBlock s n :> ef) =>
+  (Shape s, RealFloat n, Epsilon n, Typeable n, GetBlock s n :> ef) =>
   s n ->
   Resolve n ->
   Eff ef (Resolve n)
@@ -165,12 +164,11 @@ resolve' =
     -- we will grid march along the rays (of the displacement) shot
     -- from these points
     let disp = resdis resolution
-        fps = ((slocorner myself +) . fmap fromIntegral) <$> fps_
-          where
-            fps_ =
-              facepoints
-                (ceiling <$> sdimensions myself)
-                (round . signum <$> disp)
+        fps =
+          fmap ((slocorner myself +) . fmap fromIntegral) do
+            facepoints
+              (ceiling <$> sdimensions myself)
+              (round . signum <$> disp)
         minimum_ [] = Nothing
         minimum_ xs = Just $ minimumBy (comparing hittime) xs
     -- if i'm currently in contact with something, i can freely
