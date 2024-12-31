@@ -127,7 +127,7 @@ march start (fmap nonegzero -> direction) = runST do
         -- on (round_ (-(sig ! j))) ... you need a greatest integer
         -- less than (or least integer greater than) the current
         -- coordinate, which is either ((subtract 1) . ceiling)
-        -- or ((+ 1) . floor), depending on the the OPPOSITE side of the
+        -- or ((+ 1) . floor), depending on the OPPOSITE side of the
         -- signum of the direction. the subtract 1 vs. + 1 will be done
         -- when we subtract the sig component from the grid point
         -- later on
