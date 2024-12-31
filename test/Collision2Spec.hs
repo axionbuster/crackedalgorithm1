@@ -34,9 +34,9 @@ spec = do
   describe "Collision" do
     describe "hitting" do
       it "lets zombie slide on top of block" do
-        let zombie = genericzombie (V3 0 0 0)
+        let zombie = genericzombie (V3 2 0.5 0)
             block = genericcube (V3 0 0 1)
-            disp = V3 0 0 1.3
+            disp = V3 0 0 1
          in hitting disp zombie block `shouldSatisfy` isNothing
   describe "Collision2" do
     describe "resolve" do
