@@ -45,7 +45,7 @@ data I f a = I
     -- | compensator for 'icur'
     icom :: !(f a),
     -- | grid points intersected
-    igrid :: !([f Int])
+    igrid :: ![f Int]
   }
 
 -- | march along a line segment, finding all intersections
@@ -93,7 +93,7 @@ march ::
   f a ->
   -- | list of (total time, point, [grid point]) pairs
   [(a, f a, [f Int])]
-march _ direction | any (not . isfinite) direction = []
+march _ direction | (not . all isfinite) direction = []
 march _ direction | all nearZero direction = []
 march start (fmap nonegzero -> direction) = runST do
   let fi = fromIntegral :: Int -> a
