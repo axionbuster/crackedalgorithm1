@@ -47,11 +47,11 @@ import March
 
 -- | collision resolution data type
 data Resolve a = Resolve
-  { -- | position
+  { -- | final position
     respos :: !(V3 a),
-    -- | displacement
+    -- | remaining displacement
     resdis :: !(V3 a),
-    -- | did it newly touch ground?
+    -- | what to do with the on-ground status
     restou :: !NewlyTouchingGround
   }
   deriving (Show, Eq, Generic, Typeable, Functor, Hashable, Data)
