@@ -1,4 +1,4 @@
--- | march along a line segment, finding all intersections with grid points
+-- | march along a ray, finding all intersections with grid points
 module March (march) where
 
 import Control.Lens hiding (index)
