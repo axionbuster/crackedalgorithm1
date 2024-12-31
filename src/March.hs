@@ -142,7 +142,7 @@ march start (fmap nonegzero -> direction) = runST do
          in lift2 (-) roundedv (max 0 <$> sig) & el i +~ sig ! i
       inter sig dir com cur =
         -- mechanism:
-        -- using the parametric equation of the line segment
+        -- using the parametric equation of the line
         -- find the closest intersection with the grid -> get 'time' value
         -- then use the 'time' to get the coordinates of the intersection
         let times = tabulate \i ->
