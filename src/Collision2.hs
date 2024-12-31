@@ -254,7 +254,7 @@ resolve' =
                   else (1 - hittime earliest) * (disp ! i)
             respos = scenter myself + delta
             restou =
-              NewlyTouchingGround $
+              NewlyTouchingGround
                 if
                   -- it hit downward -> newly touching ground
                   | hitnorm earliest ^. _y > 0 -> GT
