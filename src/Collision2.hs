@@ -237,8 +237,8 @@ resolve' =
               resdis = zero,
               restou =
                 if disp ^. _y > 0
-                  then NewlyTouchingGround LT
-                  else restou resolution
+                  then coerce LT -- on-ground becomes False
+                  else restou resolution -- on-ground remains the same
             }
       Just earliest -> do
         -- now correct the displacement; advance position
@@ -253,14 +253,10 @@ resolve' =
                   then 0 -- collision cancels out the displacement
                   else (1 - hittime earliest) * (disp ! i)
             respos = scenter myself + delta
-            restou =
-              NewlyTouchingGround
-                if hitnorm earliest ^. _y > 0
-                  -- it hit downward -> newly touching ground
-                  then GT
-                  -- either LT or EQ, but LT status is decided
-                  -- in the final iteration (no-collision case)
-                  else EQ
+            restou
+              | hitnorm earliest ^. _y > 0 = coerce GT -- hit the ground
+              | disp ^. _y > 0 = coerce LT -- on-ground becomes False
+              | otherwise = coerce EQ
         Resolve {respos, resdis, restou}
           & if or collided
             && not (and collided)
