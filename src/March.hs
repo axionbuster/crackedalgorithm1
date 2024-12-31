@@ -161,7 +161,7 @@ march start (fmap nonegzero -> direction) = runST do
             icur_ = fst <$> s
             icom = snd <$> s
             -- properly round coordinates meant to be integers
-            icur = tabulate @f \i ->
+            icur = tabulate \i ->
               let n = icur_ ! i
                in if eqtim $ fst $ times ! i
                     then fi $ round n
