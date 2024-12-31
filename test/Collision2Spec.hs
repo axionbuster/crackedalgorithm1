@@ -25,6 +25,12 @@ zomtr = (+ V3 0.3 0.975 0.3)
 stones :: [V3 Int] -> Model Box Double
 stones = Model . M.fromList . fmap \v -> (v, genericcube (fromIntegral <$> v))
 
+-- | given a list of coordinates & boxes return a model
+--
+-- no validation is done
+boxes :: [(V3 Int, Box Double)] -> Model Box Double
+boxes = Model . M.fromList
+
 -- | run an effect with a model
 run :: Model f n -> Eff (GetBlock f n : '[]) a -> a
 run = (runPureEff .) . runBlockModel
@@ -60,6 +66,16 @@ spec = do
               `shouldBe` Resolve
                 { -- zombie is stuck because it is overlapping with the stone
                   respos = zomtr $ V3 0 42 0.9,
-                  resdis = disp,
+                  resdis = disp, -- caller can decide it will move
                   restou = NewlyTouchingGround {newonground = EQ}
+                }
+      it "does well with slabs" do
+        let model = boxes [(V3 0 (-1) 0, Box (V3 1 0.5 1) (V3 0.5 0.25 0.5))]
+            zombie = genericzombie (V3 0 1.5 0)
+            disp = V3 0 (-2) 0
+         in run model (resolve zombie disp)
+              `shouldBe` Resolve
+                { respos = zomtr $ V3 0 0.5 0,
+                  resdis = zero,
+                  restou = NewlyTouchingGround {newonground = GT}
                 }
