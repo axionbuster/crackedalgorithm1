@@ -117,4 +117,4 @@ spec = do
          in resu `shouldSatisfy` \_ ->
               nearZero (respos resu - V3 0.5 2.475 0.5)
                 && nearZero (resdis resu)
-                && restou resu == NewlyTouchingGround {newonground = GT}
+                && restou resu == NewlyTouchingGround {newonground = LT}

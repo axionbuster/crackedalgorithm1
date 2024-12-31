@@ -231,9 +231,17 @@ resolve' =
     case mearliest of
       Nothing ->
         -- no collision, so apply the displacement
-        pure $
-          (resolution & _respos +~ disp)
-            & _resdis .~ zero
+        pure
+          Resolve
+            { respos = respos resolution + disp,
+              resdis = zero,
+              restou =
+                if disp ^. _y > 0
+                  then
+                    NewlyTouchingGround LT
+                  else
+                    restou resolution
+            }
       Just earliest -> do
         -- now correct the displacement; advance position
         let (!) = index
