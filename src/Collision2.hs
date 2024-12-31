@@ -72,6 +72,7 @@ _restou = lens restou \x y -> x {restou = y}
 {-# INLINE _restou #-}
 
 -- | \'upgrade\' a boolean: find @y@ as in @y CMP x || y == x@
+-- but if @CMP@ is not 'EQ', prefer @y /= x@
 --
 -- used to implement 'updonground'
 boolupgr ::
