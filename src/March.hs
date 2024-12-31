@@ -1,5 +1,5 @@
 -- | march along a ray, finding all intersections with grid points
-module March (march) where
+module March (March (..), march) where
 
 import Control.Lens hiding (index)
 import Control.Monad.Fix
@@ -48,6 +48,16 @@ data I f a = I
     igrid :: ![f Int]
   }
 
+-- | 'march' data structure
+data March f a = March
+  { -- | total time
+    mtot :: a,
+    -- | grid intersection (lies on boundaries of grid cells)
+    mpct :: f a,
+    -- | grid points (e.g., cubes, squares) intersected
+    mict :: [f Int]
+  }
+
 -- | march along a line segment, finding all intersections
 -- with grid squares or cubes (depending on the dimensionality)
 -- as well as the time it takes to reach each intersection
@@ -92,7 +102,7 @@ march ::
   -- | direction (no need to be normalized)
   f a ->
   -- | list of (total time, point, [grid point]) pairs
-  [(a, f a, [f Int])]
+  [March f a]
 march _ direction | (not . all isfinite) direction = []
 march _ direction | all nearZero direction = []
 march start (fmap nonegzero -> direction) = runST do
@@ -196,7 +206,7 @@ march start (fmap nonegzero -> direction) = runST do
     (t, _) <- modify tot (uncurry (add itim)) *> read tot
     write cur icur
     write com icom
-    ((t, icur, igrid) :) <$> this
+    (March t icur igrid :) <$> this
 {-# INLINEABLE march #-}
-{-# SPECIALIZE march :: V3 Double -> V3 Double -> [(Double, V3 Double, [V3 Int])] #-}
-{-# SPECIALIZE march :: V3 Float -> V3 Float -> [(Float, V3 Float, [V3 Int])] #-}
+{-# SPECIALIZE march :: V3 Double -> V3 Double -> [March V3 Double] #-}
+{-# SPECIALIZE march :: V3 Float -> V3 Float -> [March V3 Float] #-}

@@ -188,46 +188,47 @@ resolve' =
       minimum_ . concat <$> for fps \fp ->
         -- shoot ray starting at 'fp' & break at first hit
         -- (but include current position as a hit)
-        ((0, undefined, [floor <$> fp]) : march fp disp) & fix \contrm -> \case
-          -- some improper displacements can cause termination
-          -- of ray marching (which should normally be infinite)
-          [] -> pure []
-          -- no hit
-          (t, _, _) : _ | t > 1 -> pure []
-          -- grid cubes, are there any blocks?
-          (_, _, cubes) : rm ->
-            cubes & fix \contcb -> \case
-              -- no more grid points, so no
-              [] -> contrm rm
-              -- let's check the block at the grid point
-              cb : cb' -> do
-                let checkbelow =
-                      -- go below and check too
-                      getblock (cb - V3 0 1 0) <&> \case
-                        Just blockbelow
-                          | Just hitbelow <-
-                              hitting disp myself blockbelow ->
-                              (hitbelow :)
-                        _ -> id
-                    True ? action = action
-                    _ ? _ = pure id
-                    short b = shicorner b ^. _y < 0.5
-                -- check if the block at the grid point exists & is solid
-                -- also just in case a tall block (like a fence)
-                -- is there, we check the block below it
-                getblock cb >>= \case
-                  Just block
-                    -- note: ray location and myself location
-                    -- are independent of each other
-                    | Just hit <- hitting disp myself block ->
-                        -- oh, we hit something
-                        (short block ? checkbelow)
-                          <*> ((hit :) <$> contrm rm)
-                    | otherwise ->
-                        -- a block is there but we don't hit it
-                        (short block ? checkbelow) <*> contcb cb'
-                  -- no block at the grid point
-                  Nothing -> checkbelow <*> contcb cb'
+        (March 0 undefined [floor <$> fp] : march fp disp) & fix \contrm ->
+          \case
+            -- some improper displacements can cause termination
+            -- of ray marching (which should normally be infinite)
+            [] -> pure []
+            -- no hit
+            March t _ _ : _ | t > 1 -> pure []
+            -- grid cubes, are there any blocks?
+            March _ _ cubes : rm ->
+              cubes & fix \contcb -> \case
+                -- no more grid points, so no
+                [] -> contrm rm
+                -- let's check the block at the grid point
+                cb : cb' -> do
+                  let checkbelow =
+                        -- go below and check too
+                        getblock (cb - V3 0 1 0) <&> \case
+                          Just blockbelow
+                            | Just hitbelow <-
+                                hitting disp myself blockbelow ->
+                                (hitbelow :)
+                          _ -> id
+                      True ? action = action
+                      _ ? _ = pure id
+                      short b = shicorner b ^. _y < 0.5
+                  -- check if the block at the grid point exists & is solid
+                  -- also just in case a tall block (like a fence)
+                  -- is there, we check the block below it
+                  getblock cb >>= \case
+                    Just block
+                      -- note: ray location and myself location
+                      -- are independent of each other
+                      | Just hit <- hitting disp myself block ->
+                          -- oh, we hit something
+                          (short block ? checkbelow)
+                            <*> ((hit :) <$> contrm rm)
+                      | otherwise ->
+                          -- a block is there but we don't hit it
+                          (short block ? checkbelow) <*> contcb cb'
+                    -- no block at the grid point
+                    Nothing -> checkbelow <*> contcb cb'
     case mearliest of
       Nothing ->
         -- no collision, so apply the displacement
