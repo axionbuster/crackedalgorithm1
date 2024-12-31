@@ -71,8 +71,8 @@ data I f a = I
 -- the returned list being infinite, it is recommended to
 -- use 'take' to limit the number of points to be computed
 --
--- the starting point is included (and is the head of the list).
--- it has time equal to zero
+-- the starting point is not included in the list unless it
+-- happens to be a grid intersection
 --
 -- if the direction is (near) zero, or if any component of the
 -- direction is not finite, then the function will return an empty list
