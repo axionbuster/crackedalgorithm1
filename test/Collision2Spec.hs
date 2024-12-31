@@ -52,15 +52,14 @@ spec = do
                   resdis = zero,
                   restou = NewlyTouchingGround {newonground = EQ}
                 }
-      it "does not block zombie from sliding right when not blocking" do
+      it "detects when stuck and overlapping" do
         let model = stones [V3 0 42 1]
             zombie = genericzombie (V3 0 42 0.9)
             disp = V3 0 0 1.3
          in run model (resolve zombie disp)
               `shouldBe` Resolve
-                { -- because the stone is on the same level as the zombie
-                  -- it does not block it; the zombie slides through
-                  respos = zomtr $ V3 0 42 1,
-                  resdis = zero,
+                { -- zombie is stuck because it is overlapping with the stone
+                  respos = zomtr $ V3 0 42 0.9,
+                  resdis = disp,
                   restou = NewlyTouchingGround {newonground = EQ}
                 }
