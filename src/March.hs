@@ -49,7 +49,7 @@ data I f a = I
 -- as well as the time it takes to reach each intersection
 -- and the cubes that are intersected
 --
--- the cubes are represented by their bottom-left corner
+-- the cubes are represented by their low corner coordinates
 --
 -- in 2D, when a point is intersected, it will return the two squares
 -- that are intersected by the line segment. so note that it doesn't
@@ -72,7 +72,10 @@ march ::
     RealFloat a,
     Epsilon a
   ) =>
-  -- | starting point
+  -- | starting point. use either f ~ 'V2' or f ~ 'V3' or other 'Representable'
+  -- vector types where 'fmap f x' agrees with
+  --
+  -- @'tabulate' \\i -> f ('index' x i))@
   f a ->
   -- | direction (no need to be normalized)
   f a ->
