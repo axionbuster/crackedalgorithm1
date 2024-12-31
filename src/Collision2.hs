@@ -251,7 +251,7 @@ resolve' =
                   -- it hit downward -> newly touching ground
                   | hitnorm earliest ^. _y > 0 -> GT
                   -- it is not moving up or down -> no change
-                  | disp ^. _y == 0 -> EQ
+                  | nearZero (disp ^. _y) -> EQ
                   -- going up or down but no ground hit -> not touching ground
                   | otherwise -> LT
         Resolve {respos, resdis, restou}
