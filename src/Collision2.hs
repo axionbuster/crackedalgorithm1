@@ -258,10 +258,9 @@ resolve' =
                 if
                   -- it hit downward -> newly touching ground
                   | hitnorm earliest ^. _y > 0 -> GT
-                  -- it is not moving up or down -> no change
-                  | nearZero (disp ^. _y) -> EQ
-                  -- going up or down but no ground hit -> not touching ground
-                  | otherwise -> LT
+                  -- either LT or EQ, but LT status is decided
+                  -- in the final iteration (no-collision case)
+                  | otherwise -> EQ
         Resolve {respos, resdis, restou}
           & if or collided
             && not (and collided)
