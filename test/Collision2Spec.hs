@@ -109,3 +109,12 @@ spec = do
               nearZero (respos resu - V3 0.8 2.475 0.8)
                 && nearZero (resdis resu)
                   && restou resu /= NewlyTouchingGround {newonground = LT}
+      it "jumps" do
+        let model = stones [V3 0 0 0]
+            zombie = zombiebycenter (V3 0.5 1.975 0.5)
+            disp = V3 0 0.5 0
+            resu = run model (resolve zombie disp)
+         in resu `shouldSatisfy` \_ ->
+              nearZero (respos resu - V3 0.5 2.475 0.5)
+                && nearZero (resdis resu)
+                  && restou resu == NewlyTouchingGround {newonground = GT}
