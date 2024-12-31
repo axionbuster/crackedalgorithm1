@@ -255,12 +255,12 @@ resolve' =
             respos = scenter myself + delta
             restou =
               NewlyTouchingGround
-                if
+                if hitnorm earliest ^. _y > 0
                   -- it hit downward -> newly touching ground
-                  | hitnorm earliest ^. _y > 0 -> GT
+                  then GT
                   -- either LT or EQ, but LT status is decided
                   -- in the final iteration (no-collision case)
-                  | otherwise -> EQ
+                  else EQ
         Resolve {respos, resdis, restou}
           & if or collided
             && not (and collided)
