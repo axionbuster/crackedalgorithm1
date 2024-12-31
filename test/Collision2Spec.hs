@@ -4,6 +4,7 @@ import BlockModel1
 import Collision
 import Collision2
 import Data.Map.Strict as M
+import Data.Maybe
 import Effectful
 import Linear
 import Test.Hspec
@@ -30,6 +31,13 @@ run = (runPureEff .) . runBlockModel
 
 spec :: Spec
 spec = do
+  describe "Collision" do
+    describe "hitting" do
+      it "lets zombie slide on top of block" do
+        let zombie = genericzombie (V3 0 0 0)
+            block = genericcube (V3 0 0 1)
+            disp = V3 0 0 1.3
+         in hitting disp zombie block `shouldSatisfy` isNothing
   describe "Collision2" do
     describe "resolve" do
       it "blocks zombie from sliding right" do
@@ -38,9 +46,9 @@ spec = do
             disp = V3 0 0 10
          in run model (resolve zombie disp)
               `shouldBe` Resolve
-                -- the zombie tries to slide to the right but gets
-                -- blocked by the stone
-                { respos = zomtr $ V3 0 42 0.4,
+                { -- the zombie tries to slide to the right but gets
+                  -- blocked by the stone
+                  respos = zomtr $ V3 0 42 0.4,
                   resdis = zero,
                   restou = NewlyTouchingGround {newonground = EQ}
                 }
@@ -50,9 +58,9 @@ spec = do
             disp = V3 0 0 1.3
          in run model (resolve zombie disp)
               `shouldBe` Resolve
-                -- because the stone is on the same level as the zombie
-                -- it does not block it; the zombie slides through
-                { respos = zomtr $ V3 0 42 1,
+                { -- because the stone is on the same level as the zombie
+                  -- it does not block it; the zombie slides through
+                  respos = zomtr $ V3 0 42 1,
                   resdis = zero,
                   restou = NewlyTouchingGround {newonground = EQ}
                 }

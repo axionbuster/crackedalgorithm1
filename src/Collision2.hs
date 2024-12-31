@@ -34,6 +34,7 @@ import Data.Hashable
 import Data.Kind
 import Data.Ord
 import Data.Traversable
+import Debug.Trace qualified as Tr
 import Effectful
 import Effectful.Dispatch.Dynamic
 import Effectful.Exception
@@ -115,7 +116,7 @@ getblock = send . GetBlock
 
 -- | detect and resolve collision
 resolve ::
-  (Shape s, RealFloat n, Epsilon n, Typeable n, GetBlock s n :> ef) =>
+  (Shape s, RealFloat n, Epsilon n, Typeable n, Show n, GetBlock s n :> ef) =>
   -- | shape of the object who is moving
   s n ->
   -- | attempted displacement
@@ -134,7 +135,7 @@ resolve myself disp =
 -- the actual implementation of 'resolve'
 resolve' ::
   forall s n ef.
-  (Shape s, RealFloat n, Epsilon n, Typeable n, GetBlock s n :> ef) =>
+  (Shape s, RealFloat n, Epsilon n, Typeable n, Show n, GetBlock s n :> ef) =>
   s n ->
   Resolve n ->
   Eff ef (Resolve n)
@@ -164,7 +165,7 @@ resolve' =
     -- compute the times ("hits") at which the object will hit a block
     -- and then find the earliest hit
     mearliest <-
-      minimum_ . concat <$> for fps \fp ->
+      minimum_ . concat . Tr.traceShowId <$> for fps \fp ->
         -- shoot ray & break at first hit
         let raystart = scenter myself + (fromIntegral <$> fp)
          in march raystart disp & fix \continuerm -> \case
@@ -186,7 +187,7 @@ resolve' =
                             Just blockbelow
                               | Just hitbelow <-
                                   hitting disp myself blockbelow ->
-                                  (hitbelow :)
+                                  (Tr.trace ("hitbelow = " ++ show hitbelow) hitbelow :)
                             _ -> id
                         True ? action = action
                         False ? _ = pure id
