@@ -36,6 +36,14 @@ add x y c =
       c' = u - x - y'
    in (u, c')
 
+-- | intermediate data structure for 'march'
+data I f a = I
+  { itim :: a,
+    icur :: f a,
+    icom :: f a,
+    igrid :: [f Int]
+  }
+
 -- | march along a line segment, finding all intersections
 -- with grid squares or cubes (depending on the dimensionality)
 -- as well as the time it takes to reach each intersection
@@ -90,10 +98,9 @@ march start (fmap nonegzero -> direction) = runST do
           -- for difficult-to-explain reasons, you need to give a stationary (0)
           -- displacement component a fake signum of +1 in order to avoid
           -- getting -Infinity when it shouldn't
-          -- ^ FIXME: this explanation could be outdated
+          -- \^ FIXME: this explanation could be outdated
           f 0 = 1
           f x = x
-      sig = computesig direction
       -- round toward opposite direction of a signum component
       round_ (-1) = ceiling
       round_ 1 = floor
@@ -101,94 +108,78 @@ march start (fmap nonegzero -> direction) = runST do
       -- vector of functions that each generate a grid point
       -- (specialized for each dimension). confused yet? yeah, it's
       -- really hard to explain
-      gengridpoints = tabulate \i sig' v ->
+      gengridpoints = tabulate \i sig v ->
         -- grid point (compute from later-determined cur value)
         -- this was the hardest part to figure out
         --
         -- 1
-        -- on (round_ (-(sig' ! i))) ... you need a greatest integer
+        -- on (round_ (-(sig ! i))) ... you need a greatest integer
         -- less than (or least integer greater than) the current
         -- coordinate, which is either ((subtract 1) . ceiling)
         -- or ((+ 1) . floor), depending on the the OPPOSITE side of the
         -- signum of the direction. the subtract 1 vs. + 1 will be done
-        -- when we subtract the sig' component from the grid point
+        -- when we subtract the sig component from the grid point
         -- later on
         --
         -- 2
-        -- on (max 0 <$> sig') ... if you flip the coordinate system
+        -- on (max 0 <$> sig) ... if you flip the coordinate system
         -- by some axis, the grid points are still numbered by the
         -- bottom left (& etc) corner, so you need to subtract 1
         -- from the grid point if the direction is negative. this
-        -- means to add 1 to the sig' component -> hence max 0
-        let roundedv = tabulate \j -> round_ (-(sig' ! j)) (v ! j)
-         in lift2 (-) roundedv (max 0 <$> sig') & el i +~ sig' ! i
-  ftm <- new True -- first time marker
+        -- means to add 1 to the sig component -> hence max 0
+        let roundedv = tabulate \j -> round_ (-(sig ! j)) (v ! j)
+         in lift2 (-) roundedv (max 0 <$> sig) & el i +~ sig ! i
+      inter sig dir com cur =
+        -- mechanism:
+        -- using the parametric equation of the line segment
+        -- find the closest intersection with the grid -> get 'time' value
+        -- then use the 'time' to get the coordinates of the intersection
+        let times = tabulate \i ->
+              let r = round_ $ sig ! i
+                  u = fi (r (cur ! i) + sig ! i) - cur ! i
+               in (u / dir ! i, (gengridpoints ! i) sig)
+            t = minimum_ $ filter (> 0) $ map fst $ toList times
+            -- funcs to compute grid coordinates at the time of intersection
+            -- if many intersected simultaneously, return all of them
+            eqtim = nearZero . subtract t
+            gridcoordsf = fmap snd $ filter (eqtim . fst) $ toList times
+            -- elementwise error-compensated vector addition
+            vadd v w = tabulate \i -> add (v ! i) (w ! i) (com ! i)
+            -- update current position and compensator
+            s = vadd cur $ dir <&> (* t)
+            icur_ = fst <$> s
+            icom = snd <$> s
+            -- properly round coordinates meant to be integers
+            icur = tabulate @f \i ->
+              let n = icur_ ! i
+               in if eqtim $ fst $ times ! i
+                    then fi $ round n
+                    else n
+         in I {itim = t, icur, icom, igrid = gridcoordsf <&> ($ icur)}
   cur <- new start -- current position
   com <- new $ tabulate $ const 0 -- Kahan sum compensator for cur
   tot <- new (0, 0) -- (total time, compensator)
+  -- IMPORTANT NOTE:
+  -- at start, we go BACKWARD and find the first intersection
+  -- and then go forward from there to resume the normal process
+  -- this extremely hacky way of doing things is necessary
+  -- to generate the grid coordinates of the starting point in a
+  -- way that is consistent with the rest of the function
+  do
+    -- go backward and set cur, com and tot, but
+    -- don't append output to the returned list
+    let d = (* (-1)) <$> direction
+    I {itim, icur, icom} <- inter (computesig d) d <$> read com <*> read cur
+    write tot (-itim, 0)
+    write cur icur
+    write com icom
   fix \this -> do
-    -- mechanism:
-    -- using the parametric equation of the line segment
-    -- find the closest intersection with the grid -> get 'time' value
-    -- then use the 'time' to get the coordinates of the intersection
-    com' <- read com
-    cur' <- read cur
-    (sig', dir) <-
-      -- IMPORTANT NOTE:
-      -- at start, we go BACKWARD and find the first intersection
-      -- and then go forward from there to resume the normal process
-      -- this extremely hacky way of doing things is necessary
-      -- to generate the grid coordinates of the starting point in a
-      -- way that is consistent with the rest of the function
-      read ftm <&> \ftm' ->
-        if ftm'
-          then
-            -- we can't just reverse the "signum" vector because it's
-            -- actually not a signum vector; we start from the signum
-            -- vector, but we coerce 0 to 1. so the opposite of
-            -- this vector has to be computed manually from reverse
-            let d = (* (-1)) <$> direction
-             in (computesig d, d)
-          else (sig, direction)
-    let times = tabulate @f \i ->
-          -- solve for time to next intersection in dimension i
-          ( let r = round_ $ sig' ! i
-                u = fi (r (cur' ! i) + sig' ! i) - cur' ! i
-             in u / dir ! i, -- the time
-            (gengridpoints ! i) sig' -- function to get grid point
-          )
-        tim = minimum_ $ filter (> 0) $ toList $ fmap fst times
-        eqtim = nearZero . subtract tim
-        -- list of functions that, given a point, return the grid coordinates
-        gridcoordsf = fmap snd $ filter (eqtim . fst) $ toList times
-        vadd v w = tabulate \i ->
-          -- elementwise error-compensated vector addition
-          add (v ! i) (w ! i) (com' ! i)
-        -- update current position and compensator
-        s = vadd cur' $ dir <&> (* tim)
-        newcur = fst <$> s
-        newcom = snd <$> s
-        -- properly round coordinates meant to be integers
-        newcur' = tabulate @f \i ->
-          let n = newcur ! i
-           in if eqtim $ fst $ times ! i
-                then fi $ round n
-                else n
-    -- update total time with compensated sum
-    tot' <- modify tot (uncurry (add tim)) *> fmap fst (read tot)
-    write cur newcur'
-    write com newcom
-    ftm' <- read ftm
-    if ftm'
-      then do
-        -- first time = reverse direction
-        -- after that the direction will be reset as we go forward
-        write ftm False
-        -- negate the time so that next time we add it back it becomes 0
-        modify tot (\(x, y) -> (x * (-1), y * (-1)))
-        -- we ignore this backward step
-        this
-      else ((tot', newcur', gridcoordsf <&> ($ newcur')) :) <$> this
+    let sig = computesig direction
+    I {itim, icur, icom, igrid} <- inter sig direction <$> read com <*> read cur
+    (fst -> t) <- modify tot (uncurry (add itim)) *> read tot
+    write cur icur
+    write com icom
+    ((t, icur, igrid) :) <$> this
 {-# INLINEABLE march #-}
 {-# SPECIALIZE march :: V3 Double -> V3 Double -> [(Double, V3 Double, [V3 Int])] #-}
 {-# SPECIALIZE march :: V3 Float -> V3 Float -> [(Float, V3 Float, [V3 Int])] #-}
