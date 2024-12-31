@@ -189,7 +189,7 @@ march start (fmap nonegzero -> direction) = runST do
   fix \this -> do
     let sig = computesig direction
     I {itim, icur, icom, igrid} <- inter sig direction <$> read com <*> read cur
-    (fst -> t) <- modify tot (uncurry (add itim)) *> read tot
+    (t, _) <- modify tot (uncurry (add itim)) *> read tot
     write cur icur
     write com icom
     ((t, icur, igrid) :) <$> this
