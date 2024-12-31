@@ -38,6 +38,13 @@ boxes = Model . M.fromList
 run :: Model f n -> Eff (GetBlock f n : '[]) a -> a
 run = (runPureEff .) . runBlockModel
 
+-- | check if two resolutions are near equal
+resolveneareq :: Resolve Double -> Resolve Double -> Expectation
+resolveneareq a_ b = shouldSatisfy a_ \a ->
+  nearZero (respos a - respos b)
+    && nearZero (resdis a - resdis b)
+    && restou a == restou b
+
 spec :: Spec
 spec = do
   describe "Collision" do
@@ -54,7 +61,7 @@ spec = do
             zombie = genericzombie (V3 0 42 0)
             disp = V3 0 0 10
          in run model (resolve zombie disp)
-              `shouldBe` Resolve
+              `resolveneareq` Resolve
                 { -- the zombie tries to slide to the right but gets
                   -- blocked by the stone
                   respos = zomtr $ V3 0 42 0.4,
@@ -66,7 +73,7 @@ spec = do
             zombie = genericzombie (V3 0 42 0.9)
             disp = V3 0 0 1.3
          in run model (resolve zombie disp)
-              `shouldBe` Resolve
+              `resolveneareq` Resolve
                 { -- zombie is stuck because it is overlapping with the stone
                   respos = zomtr $ V3 0 42 0.9,
                   resdis = disp, -- so it can unstuck itself
@@ -77,7 +84,7 @@ spec = do
             zombie = genericzombie (V3 0 1.5 0)
             disp = V3 0 (-2) 0
          in run model (resolve zombie disp)
-              `shouldBe` Resolve
+              `resolveneareq` Resolve
                 { respos = zomtr $ V3 0 0.5 0,
                   resdis = zero,
                   -- it touches the ground so it should say GT
@@ -88,7 +95,7 @@ spec = do
             zombie = zombiebycenter (V3 1.112 1.998 0)
             disp = V3 0.273 (-0.0784) 0
          in run model (resolve zombie disp)
-              `shouldBe` Resolve
+              `resolveneareq` Resolve
                 { respos = V3 1.385 1.975 0,
                   resdis = zero,
                   restou = NewlyTouchingGround {newonground = GT}

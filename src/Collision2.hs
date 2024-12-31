@@ -15,6 +15,9 @@ module Collision2
   ( GetBlock (..),
     Resolve (..),
     NewlyTouchingGround (..),
+    _respos,
+    _resdis,
+    _restou,
     boolupgr,
     updonground,
     getblock,
@@ -34,6 +37,7 @@ import Data.Hashable
 import Data.Kind
 import Data.Ord
 import Data.Traversable
+import Debug.Trace qualified as Tr
 import Effectful
 import Effectful.Dispatch.Dynamic
 import Effectful.Exception
@@ -52,6 +56,21 @@ data Resolve a = Resolve
     restou :: !NewlyTouchingGround
   }
   deriving (Show, Eq, Generic, Typeable, Functor, Hashable, Data)
+
+-- | lens for 'Resolve' position
+_respos :: Lens' (Resolve a) (V3 a)
+_respos = lens respos \x y -> x {respos = y}
+{-# INLINE _respos #-}
+
+-- | lens for 'Resolve' displacement
+_resdis :: Lens' (Resolve a) (V3 a)
+_resdis = lens resdis \x y -> x {resdis = y}
+{-# INLINE _resdis #-}
+
+-- | lens for 'Resolve' newly touching ground
+_restou :: Lens' (Resolve a) NewlyTouchingGround
+_restou = lens restou \x y -> x {restou = y}
+{-# INLINE _restou #-}
 
 -- | \'upgrade\' a boolean: find @y@ as in @y CMP x || y == x@
 --
@@ -115,7 +134,7 @@ getblock = send . GetBlock
 
 -- | detect and resolve collision
 resolve ::
-  (Shape s, RealFloat n, Epsilon n, Typeable n, GetBlock s n :> ef) =>
+  (Shape s, RealFloat n, Epsilon n, Typeable n, Show n, GetBlock s n :> ef) =>
   -- | shape of the object who is moving
   s n ->
   -- | attempted displacement
@@ -134,7 +153,7 @@ resolve myself disp =
 -- the actual implementation of 'resolve'
 resolve' ::
   forall s n ef.
-  (Shape s, RealFloat n, Epsilon n, Typeable n, GetBlock s n :> ef) =>
+  (Shape s, RealFloat n, Epsilon n, Typeable n, Show n, GetBlock s n :> ef) =>
   s n ->
   Resolve n ->
   Eff ef (Resolve n)
@@ -146,15 +165,18 @@ resolve' =
     -- we will grid march along the rays (of the displacement) shot
     -- from these points
     let disp = resdis resolution
-        fps = facepoints a b
+        fps = ((slocorner myself +) . fmap fromIntegral) <$> fps_
           where
-            V2 a b = fmap ceiling <$> corners myself
+            fps_ =
+              facepoints
+                (ceiling <$> sdimensions myself)
+                (round . signum <$> disp)
         minimum_ [] = Nothing
         minimum_ xs = Just $ minimumBy (comparing hittime) xs
     -- if i'm currently in contact with something, i can freely
     -- move in the direction of the displacement, as part of the
     -- game physics
-    for_ fps do
+    for_ (fmap floor <$> fps) do
       getblock >=> \case
         Just block
           | intersecting myself block ->
@@ -165,52 +187,53 @@ resolve' =
     -- and then find the earliest hit
     mearliest <-
       minimum_ . concat <$> for fps \fp ->
-        -- shoot ray & break at first hit
-        let raystart = scenter myself + (fromIntegral <$> fp)
-         in march raystart disp & fix \continuerm -> \case
-              -- some improper displacements can cause termination
-              -- of ray marching (which should normally be infinite)
-              [] -> pure []
-              -- no hit
-              (t, _, _) : _ | t > 1 -> pure []
-              -- grid cubes, are there any blocks?
-              (_, _, cubes) : rm ->
-                cubes & fix \continuecb -> \case
-                  -- no more grid points, so no
-                  [] -> continuerm rm
-                  -- let's check the block at the grid point
-                  cb : cb' -> do
-                    let checkbelow =
-                          -- go below and check too
-                          getblock (cb - V3 0 1 0) <&> \case
-                            Just blockbelow
-                              | Just hitbelow <-
-                                  hitting disp myself blockbelow ->
-                                  (hitbelow :)
-                            _ -> id
-                        True ? action = action
-                        False ? _ = pure id
-                        short b = shicorner b ^. _y < 0.5
-                    -- check if the block at the grid point exists & is solid
-                    -- also just in case a tall block (like a fence)
-                    -- is there, we check the block below it
-                    getblock cb >>= \case
-                      Just block
-                        -- note: ray location and myself location
-                        -- are independent of each other
-                        | Just hit <- hitting disp myself block ->
-                            -- oh, we hit something
-                            (short block ? checkbelow)
-                              <*> ((hit :) <$> continuerm rm)
-                        | otherwise ->
-                            -- a block is there but we don't hit it
-                            (short block ? checkbelow) <*> continuecb cb'
-                      -- no block at the grid point
-                      Nothing -> checkbelow <*> continuecb cb'
+        -- shoot ray starting at 'fp' & break at first hit
+        march fp disp & fix \continuerm -> \case
+          -- some improper displacements can cause termination
+          -- of ray marching (which should normally be infinite)
+          [] -> pure []
+          -- no hit
+          (t, _, _) : _ | t > 1 -> pure []
+          -- grid cubes, are there any blocks?
+          (_, _, cubes) : rm ->
+            cubes & fix \continuecb -> \case
+              -- no more grid points, so no
+              [] -> continuerm rm
+              -- let's check the block at the grid point
+              cb : cb' -> do
+                let checkbelow =
+                      -- go below and check too
+                      getblock (cb - V3 0 1 0) <&> \case
+                        Just blockbelow
+                          | Just hitbelow <-
+                              hitting disp myself blockbelow ->
+                              (hitbelow :)
+                        _ -> id
+                    True ? action = action
+                    False ? _ = pure id
+                    short b = shicorner b ^. _y < 0.5
+                -- check if the block at the grid point exists & is solid
+                -- also just in case a tall block (like a fence)
+                -- is there, we check the block below it
+                getblock cb >>= \case
+                  Just block
+                    -- note: ray location and myself location
+                    -- are independent of each other
+                    | Just hit <- hitting disp myself block ->
+                        -- oh, we hit something
+                        (short block ? checkbelow)
+                          <*> ((hit :) <$> continuerm rm)
+                    | otherwise ->
+                        -- a block is there but we don't hit it
+                        (short block ? checkbelow) <*> continuecb cb'
+                  -- no block at the grid point
+                  Nothing -> checkbelow <*> continuecb cb'
     case mearliest of
       Nothing ->
-        -- no collision
-        pure resolution
+        -- no collision, so apply the displacement
+        pure $
+          (resolution & _respos +~ disp)
+            & _resdis .~ zero
       Just earliest -> do
         -- now correct the displacement; advance position
         let (!) = index
