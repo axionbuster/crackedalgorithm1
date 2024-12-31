@@ -238,7 +238,7 @@ resolve' =
               restou =
                 if disp ^. _y > 0
                   then coerce LT -- on-ground becomes False
-                  else restou resolution -- on-ground remains the same
+                  else restou resolution -- (inherit) previous decision
             }
       Just earliest -> do
         -- now correct the displacement; advance position
