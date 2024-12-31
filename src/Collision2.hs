@@ -159,7 +159,7 @@ resolve' ::
 resolve' =
   -- this is a loop that will run until the displacement is resolved
   -- (i.e., until it stops moving due to resolution or being blocked)
-  fix \continue myself resolution -> do
+  fix \cont myself resolution -> do
     -- sample some points off the relevant faces of the object
     -- we will grid march along the rays (of the displacement) shot
     -- from these points
@@ -186,7 +186,8 @@ resolve' =
     mearliest <-
       minimum_ . concat <$> for fps \fp ->
         -- shoot ray starting at 'fp' & break at first hit
-        march fp disp & fix \continuerm -> \case
+        -- (but include current position as a hit)
+        ((0, undefined, [floor <$> fp]) : march fp disp) & fix \contrm -> \case
           -- some improper displacements can cause termination
           -- of ray marching (which should normally be infinite)
           [] -> pure []
@@ -194,9 +195,9 @@ resolve' =
           (t, _, _) : _ | t > 1 -> pure []
           -- grid cubes, are there any blocks?
           (_, _, cubes) : rm ->
-            cubes & fix \continuecb -> \case
+            cubes & fix \contcb -> \case
               -- no more grid points, so no
-              [] -> continuerm rm
+              [] -> contrm rm
               -- let's check the block at the grid point
               cb : cb' -> do
                 let checkbelow =
@@ -220,12 +221,12 @@ resolve' =
                     | Just hit <- hitting disp myself block ->
                         -- oh, we hit something
                         (short block ? checkbelow)
-                          <*> ((hit :) <$> continuerm rm)
+                          <*> ((hit :) <$> contrm rm)
                     | otherwise ->
                         -- a block is there but we don't hit it
-                        (short block ? checkbelow) <*> continuecb cb'
+                        (short block ? checkbelow) <*> contcb cb'
                   -- no block at the grid point
-                  Nothing -> checkbelow <*> continuecb cb'
+                  Nothing -> checkbelow <*> contcb cb'
     case mearliest of
       Nothing ->
         -- no collision, so apply the displacement
@@ -259,6 +260,6 @@ resolve' =
             && not (and collided)
             && (resdis /= zero)
             then
-              continue $ translate respos myself
+              cont $ translate respos myself
             else
               pure

@@ -101,7 +101,7 @@ spec = do
                   restou = NewlyTouchingGround {newonground = GT}
                 }
       it "detects a fence below" do
-        let model = boxes [(V3 0 0 0, Box (V3 0.5 0.75 0.5) (V3 0.25 1.5 0.25))]
+        let model = boxes [(V3 0 0 0, Box (V3 0.25 1.5 0.25) (V3 0.5 0.75 0.5))]
             zombie = zombiebycenter (V3 0.8 2.475 0.8)
             disp = V3 0 (-0.25) 0
             resu = run model (resolve zombie disp)
