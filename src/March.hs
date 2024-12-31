@@ -124,7 +124,7 @@ march start (fmap nonegzero -> direction) = runST do
         -- this was the hardest part to figure out
         --
         -- 1
-        -- on (round_ (-(sig ! i))) ... you need a greatest integer
+        -- on (round_ (-(sig ! j))) ... you need a greatest integer
         -- less than (or least integer greater than) the current
         -- coordinate, which is either ((subtract 1) . ceiling)
         -- or ((+ 1) . floor), depending on the the OPPOSITE side of the
