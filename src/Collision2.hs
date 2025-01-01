@@ -188,8 +188,8 @@ resolve' =
       minimum_ . concat <$> for fps \fp ->
         -- shoot ray starting at 'fp' & break at first hit & move on to
         -- next fp. note: ray-box collision is NOT what's happening here;
-        -- instead each time a ray enters a cube, we get the location of
-        -- the cube, and we are checking if the cube is occupied.
+        -- instead each time a ray enters a grid cube, we get the location
+        -- of the cube, and we are checking if the cube is occupied.
         -- ray can pass through one cube through its face, two through an
         -- edge (not parallel to an axial plane), and three at a time
         -- through a corner (same restrictions). the operation is ill-
