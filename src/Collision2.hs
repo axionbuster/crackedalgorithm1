@@ -186,8 +186,16 @@ resolve' =
     -- and then find the earliest hit
     mearliest <-
       minimum_ . concat <$> for fps \fp ->
-        -- shoot ray starting at 'fp' & break at first hit
-        -- (but include current position as a hit)
+        -- shoot ray starting at 'fp' & break at first hit & move on to
+        -- next fp. note: ray-box collision is NOT what's happening here;
+        -- instead each time a ray enters a cube, we get the location of
+        -- the cube, and we are checking if the cube is occupied.
+        -- ray can pass through one cube through its face, two through an
+        -- edge (not parallel to an axial plane), and three at a time
+        -- through a corner (same restrictions). the operation is ill-
+        -- defined right now if it travels on an axial plane or along
+        -- an edge, but something will be returned so we can inspect it
+        -- (also inspect the cube fp is in)
         (March 0 undefined [floor <$> fp] : march fp disp) & fix \contrm ->
           \case
             -- some improper displacements can cause termination
