@@ -44,6 +44,7 @@ import Face
 import GHC.Generics (Generic)
 import Linear
 import March
+import Prelude hiding (break)
 
 -- | collision resolution data type
 data Resolve a = Resolve
@@ -265,7 +266,7 @@ chkcol ::
   -- continuation for continuing to next grid cube
   Eff ef [a2] ->
   Eff ef [a2]
-chkcol cb chkhit contrm contcb = do
+chkcol cb chkhit break continue = do
   let chkbelow =
         -- go below and check too
         getblock (cb & _y -~ 1) <&> \case
@@ -283,9 +284,9 @@ chkcol cb chkhit contrm contcb = do
       -- are independent of each other
       | Just hit <- chkhit block ->
           -- oh, we hit something
-          (short block ? chkbelow) <*> ((hit :) <$> contrm)
+          (short block ? chkbelow) <*> ((hit :) <$> break)
       | otherwise ->
           -- a block is there but we don't hit it
-          (short block ? chkbelow) <*> contcb
+          (short block ? chkbelow) <*> continue
     -- no block at the grid cube
-    Nothing -> chkbelow <*> contcb
+    Nothing -> chkbelow <*> continue
