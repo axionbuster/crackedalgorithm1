@@ -118,3 +118,18 @@ spec = do
               nearZero (respos resu - V3 0.5 2.475 0.5)
                 && nearZero (resdis resu)
                 && restou resu == NewlyTouchingGround {newonground = LT}
+      it "detects a fence below a carpet" do
+        let model =
+              boxes
+                [ (V3 0 (-1) 0, Box (V3 1 0.0625 1) (V3 0.5 (-0.96875) 0.5)),
+                  (V3 0 (-2) 0, Box (V3 0.25 1.5 0.25) (V3 0.5 (-1.25) 0.5))
+                ]
+            zombie = zombiebycenter (V3 0.3 0.975 0.3)
+            disp = V3 0 (-10) 0
+            resu = run model (resolve zombie disp)
+         in resu
+              `resolveneareq` Resolve
+                { respos = V3 0.3 0.475 0.3,
+                  resdis = zero,
+                  restou = NewlyTouchingGround {newonground = GT}
+                }
