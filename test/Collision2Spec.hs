@@ -3,7 +3,8 @@ module Collision2Spec (spec) where
 import BlockModel1
 import Collision
 import Collision2
-import Data.Map.Strict as M
+import Control.Monad.Fix
+import Data.Map.Strict qualified as M
 import Data.Maybe
 import Effectful
 import Face
@@ -53,6 +54,39 @@ resolveneareq a_ b = shouldSatisfy a_ \a ->
   nearZero (respos a - respos b)
     && nearZero (resdis a - resdis b)
     && restou a == restou b
+
+-- | lay an infinite ray of blocks of a certain shape along an axis
+layray ::
+  -- | length of the ray
+  Int ->
+  -- | a point chosen on the line
+  V3 Int ->
+  -- | a direction vector
+  --
+  -- try using a signum vector; this function does NOT use
+  -- a proper line-drawing algorithm
+  V3 Int ->
+  -- | a shape to lay
+  (V3 Int -> Box Double) ->
+  -- | model
+  Model Box Double
+layray n p d f =
+  Model $
+    M.fromList $
+      take n $
+        fmap (\i -> (i, f i)) $
+          iterate (+ d) p
+
+layline :: Int -> V3 Int -> V3 Int -> (V3 Int -> Box Double) -> Model Box Double
+layline n p d f =
+  let inter = fix \z (x : xs) (y : ys) -> x : y : z xs ys
+      g i = (i, f i)
+   in Model $
+        M.fromList $
+          take n $
+            inter
+              (fmap g $ iterate (+ d) p)
+              (fmap g $ iterate (subtract d) p)
 
 spec :: Spec
 spec = do
@@ -215,3 +249,14 @@ spec = do
                   resdis = zero,
                   restou = NewlyTouchingGround {newonground = EQ}
                 }
+      it "allows sliding along a line" do
+        let model =
+              layray 10 (V3 0 0 0) (V3 1 0 0) $
+                genericcube . fmap fromIntegral
+            zombie = genericzombie (V3 0 1 0)
+            disp = V3 10 (-1) 0
+         in run model (resolve zombie disp)
+              `shouldSatisfy` \m ->
+                nearZero (respos m - zomtr (V3 10 1 0))
+                  && nearZero (resdis m)
+                  && restou m /= NewlyTouchingGround {newonground = LT}
