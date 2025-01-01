@@ -34,6 +34,14 @@ stones = Model . M.fromList . fmap \v -> (v, genericcube (fromIntegral <$> v))
 boxes :: [(V3 Int, Box Double)] -> Model Box Double
 boxes = Model . M.fromList
 
+-- | like 'boxes' but with many boxes
+boxes' :: [(V3 Int, ManyBoxes [] Double)] -> Model (ManyBoxes []) Double
+boxes' = Model . M.fromList
+
+-- | like 'zombiebycenter' but with many boxes
+zombiebycenter' :: V3 Double -> ManyBoxes [] Double
+zombiebycenter' = ManyBoxes . pure . zombiebycenter
+
 -- | run an effect with a model
 run :: Model f n -> Eff (GetBlock f n : '[]) a -> a
 run = (runPureEff .) . runBlockModel
@@ -132,4 +140,40 @@ spec = do
                 { respos = V3 0.3 0.475 0.3,
                   resdis = zero,
                   restou = NewlyTouchingGround {newonground = GT}
+                }
+      it "lets a zombie pass through the gap of stairs" do
+        let model =
+              boxes'
+                [ ( V3 0 0 0,
+                    ManyBoxes
+                      [ Box (V3 1 0.5 1) (V3 0.5 0.25 0.5),
+                        Box (V3 1 0.5 0.5) (V3 0.5 0.75 0.25)
+                      ]
+                  )
+                ]
+            zombie = zombiebycenter' (V3 (-1) 1.478 0.8)
+            disp = V3 10 0 0
+         in run model (resolve zombie disp)
+              `resolveneareq` Resolve
+                { respos = V3 9 1.478 0.8,
+                  resdis = zero,
+                  restou = NewlyTouchingGround {newonground = EQ}
+                }
+      it "blocks zombie by stairs" do
+        let model =
+              boxes'
+                [ ( V3 0 0 0,
+                    ManyBoxes
+                      [ Box (V3 1 0.5 1) (V3 0.5 0.25 0.5),
+                        Box (V3 1 0.5 0.5) (V3 0.5 0.75 0.25)
+                      ]
+                  )
+                ]
+            zombie = zombiebycenter' (V3 (-1) 1.478 0.7)
+            disp = V3 10 0 0
+         in run model (resolve zombie disp)
+              `resolveneareq` Resolve
+                { respos = V3 (-0.3) 1.478 0.7,
+                  resdis = zero,
+                  restou = NewlyTouchingGround {newonground = EQ}
                 }
