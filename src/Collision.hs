@@ -98,11 +98,13 @@ class Shape s where
 
   -- | the center of the shape
   scenter :: (Fractional a, Ord a) => s a -> V3 a
-  scenter s = (sum . corners $ s) <&> (/ 2) -- not numerically stable
+  scenter s = (sum . corners $ s) <&> (/ 2) -- not robust to large numbers
+  {-# INLINE scenter #-}
 
   -- | the dimensions of the shape
   sdimensions :: (Fractional a, Ord a) => s a -> V3 a
   sdimensions s = let V2 l h = corners s in h - l
+  {-# INLINE sdimensions #-}
 
 v2fst :: V2 a -> a
 v2fst (V2 a _) = a
