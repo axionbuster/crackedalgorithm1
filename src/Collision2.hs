@@ -204,7 +204,7 @@ resolve' =
                 cb : cb' -> do
                   let checkbelow =
                         -- go below and check too
-                        getblock (cb - V3 0 1 0) <&> \case
+                        getblock (cb & _y -~ 1) <&> \case
                           Just blockbelow
                             | Just hitbelow <-
                                 hitting disp myself blockbelow ->
