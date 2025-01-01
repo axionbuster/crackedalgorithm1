@@ -1,9 +1,9 @@
 module BoxSpec (spec) where
 
-import Test.Hspec
-import Linear
 import Collision
 import Data.Maybe
+import Linear
+import Test.Hspec
 
 boxd :: V3 Double -> V3 Double -> Box Double
 boxd = Box
@@ -41,5 +41,5 @@ spec = do
         let vel = V3 0 0 3
             box1 = boxd (pure 1) (V3 0 0 (-5))
             box2 = boxd (pure 1) (V3 0 0 (-1))
-            -- we decided that barely touching is not hitting
-         in hitting vel box1 box2 `shouldSatisfy` isNothing
+         in -- we decided that barely touching is not hitting
+            hitting vel box1 box2 `shouldSatisfy` isNothing
