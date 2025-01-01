@@ -174,7 +174,7 @@ resolve' =
         minimum_ xs = Just $ minimumBy (comparing hittime) xs
     -- if i'm currently in contact with something, i can freely
     -- move in the direction of the displacement, as part of the
-    -- game physics
+    -- game physics; this is so i can unstuck myself out
     for_ (fmap floor <$> fps) do
       getblock >=> \case
         Just block
