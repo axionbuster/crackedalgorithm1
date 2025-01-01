@@ -97,8 +97,8 @@ spec = do
       it "correctly computes face points of ManyBoxes version of zombie" do
         let zombie' = zombiebycenter' (V3 (-1) 1.478 0.7)
             zombie = zombiebycenter (V3 (-1) 1.478 0.7)
-            fp0 = facepoints (fmap ceiling $ sdimensions zombie) (V3 10 0 0)
-            fp1 = facepoints (fmap ceiling $ sdimensions zombie') (V3 10 0 0)
+            fp0 = facepoints (ceiling <$> sdimensions zombie) (V3 10 0 0)
+            fp1 = facepoints (ceiling <$> sdimensions zombie') (V3 10 0 0)
          in fp1 `shouldBe` fp0
   describe "Collision2" do
     describe "resolve" do

@@ -73,15 +73,13 @@ dbgcountfacepoints ::
 dbgcountfacepoints ((+ pure 1) -> coid) sig =
   let (!) = index
       c ? a = if c then a else 0
-      allnz3 = all (/= 0)
-      allnz2 = all (/= 0)
       V3 cx cy cz = coid
    in (sig ! ex /= 0) ? (cy * cz)
         + (sig ! ey /= 0) ? (cz * cx)
         + (sig ! ez /= 0) ? (cx * cy)
         + if
-          | allnz3 sig -> 1 - cx - cy - cz
-          | allnz2 $ sig ^. _xy -> -cz
-          | allnz2 $ sig ^. _yz -> -cx
-          | allnz2 $ sig ^. _zx -> -cy
+          | notElem 0 sig -> 1 - cx - cy - cz
+          | notElem 0 $ sig ^. _xy -> -cz
+          | notElem 0 $ sig ^. _yz -> -cx
+          | notElem 0 $ sig ^. _zx -> -cy
           | otherwise -> 0
