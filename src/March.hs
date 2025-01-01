@@ -53,6 +53,8 @@ data March f a = March
   { -- | total time
     mtot :: a,
     -- | grid intersection (lies on boundaries of grid cells)
+    --
+    -- \'pct\' is for \'punctum\', which is Latin for point
     mpct :: f a,
     -- | grid points (e.g., cubes, squares) intersected
     mict :: [f Int]
