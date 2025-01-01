@@ -62,6 +62,24 @@ spec = do
             block = genericcube (V3 0 (-1) 1)
             disp = V3 0 0 1
          in hitting disp zombie block `shouldSatisfy` isNothing
+      it "handles the stairs case (passing)" do
+        let zombie = zombiebycenter' (V3 (-1) 1.478 0.8)
+            stairs =
+              ManyBoxes
+                [ Box (V3 1 0.5 1) (V3 0.5 0.25 0.5),
+                  Box (V3 1 0.5 0.5) (V3 0.5 0.75 0.25)
+                ]
+            disp = V3 10 0 0
+         in hitting disp zombie stairs `shouldSatisfy` isNothing
+      it "handles the stairs case (blocking)" do
+        let zombie = zombiebycenter' (V3 (-1) 1.478 0.7)
+            stairs =
+              ManyBoxes
+                [ Box (V3 1 0.5 1) (V3 0.5 0.25 0.5),
+                  Box (V3 1 0.5 0.5) (V3 0.5 0.75 0.25)
+                ]
+            disp = V3 10 0 0
+         in hitting disp zombie stairs `shouldSatisfy` isJust
   describe "Collision2" do
     describe "resolve" do
       it "blocks zombie from sliding right" do
