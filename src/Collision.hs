@@ -102,7 +102,7 @@ class Shape s where
 
   -- | the dimensions of the shape
   sdimensions :: (Fractional a, Ord a) => s a -> V3 a
-  sdimensions s = let V2 h l = corners s in h - l
+  sdimensions s = let V2 l h = corners s in h - l
 
 v2fst :: V2 a -> a
 v2fst (V2 a _) = a

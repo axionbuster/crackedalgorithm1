@@ -6,6 +6,7 @@ import Collision2
 import Data.Map.Strict as M
 import Data.Maybe
 import Effectful
+import Face
 import Linear
 import Test.Hspec
 
@@ -80,6 +81,25 @@ spec = do
                 ]
             disp = V3 10 0 0
          in hitting disp zombie stairs `shouldSatisfy` isJust
+    describe "ManyBoxes" do
+      describe "corners" do
+        it "of zombie (ManyBoxes) are identical to Box version" do
+          let zombie' = zombiebycenter' (V3 (-1) 1.478 0.7)
+              zombie = zombiebycenter (V3 (-1) 1.478 0.7)
+           in corners zombie `shouldBe` corners zombie'
+      describe "sdimensions" do
+        it "of zombie (ManyBoxes) are identical to Box version" do
+          let zombie' = zombiebycenter' (V3 (-1) 1.478 0.7)
+              zombie = zombiebycenter (V3 (-1) 1.478 0.7)
+           in sdimensions zombie `shouldSatisfy` \d ->
+                nearZero $ sdimensions zombie' - d
+    describe "Face" do
+      it "correctly computes face points of ManyBoxes version of zombie" do
+        let zombie' = zombiebycenter' (V3 (-1) 1.478 0.7)
+            zombie = zombiebycenter (V3 (-1) 1.478 0.7)
+            fp0 = facepoints (fmap ceiling $ sdimensions zombie) (V3 10 0 0)
+            fp1 = facepoints (fmap ceiling $ sdimensions zombie') (V3 10 0 0)
+         in fp1 `shouldBe` fp0
   describe "Collision2" do
     describe "resolve" do
       it "blocks zombie from sliding right" do

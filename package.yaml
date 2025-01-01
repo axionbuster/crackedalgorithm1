@@ -82,3 +82,4 @@ tests:
     - hspec
     - containers
     - linear
+    - lens
