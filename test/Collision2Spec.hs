@@ -254,9 +254,9 @@ spec = do
               layray 10 (V3 0 0 0) (V3 1 0 0) $
                 genericcube . fmap fromIntegral
             zombie = genericzombie (V3 0 1 0)
-            disp = V3 10 (-1) 0
+            disp = V3 10 (-1) 1
          in run model (resolve zombie disp)
               `shouldSatisfy` \m ->
-                nearZero (respos m - zomtr (V3 10 1 0))
+                nearZero (respos m - zomtr (V3 10 1 1))
                   && nearZero (resdis m)
                   && restou m /= NewlyTouchingGround {newonground = LT}
