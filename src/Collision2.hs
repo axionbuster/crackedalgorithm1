@@ -210,7 +210,12 @@ resolve' =
                 -- need to go one step further along the ray
                 [] -> contrm rm
                 -- let's check the block at the grid cube
-                cb : cb' -> chkcol cb cb' rm (hitting disp myself) contrm contcb
+                cb : cb' ->
+                  chkcol
+                    cb
+                    (hitting disp myself)
+                    (contrm rm)
+                    (contcb cb')
     case mearliest of
       Nothing ->
         -- no collision, so apply the displacement
@@ -253,18 +258,14 @@ chkcol ::
   (GetBlock s a1 :> ef, Shape s, Fractional a1, Ord a1) =>
   -- where (block coordinates)
   V3 Int ->
-  -- remaining grid cubes (block coordinates)
-  t1 ->
-  -- remaining rays
-  t2 ->
   -- check for hit given block shape (shape has absolute coordinates)
   (s a1 -> Maybe a2) ->
   -- continuation for continuing to next ray
-  (t2 -> Eff ef [a2]) ->
+  Eff ef [a2] ->
   -- continuation for continuing to next grid cube
-  (t1 -> Eff ef [a2]) ->
+  Eff ef [a2] ->
   Eff ef [a2]
-chkcol cb cb' rm chkhit contrm contcb = do
+chkcol cb chkhit contrm contcb = do
   let chkbelow =
         -- go below and check too
         getblock (cb & _y -~ 1) <&> \case
@@ -282,9 +283,9 @@ chkcol cb cb' rm chkhit contrm contcb = do
       -- are independent of each other
       | Just hit <- chkhit block ->
           -- oh, we hit something
-          (short block ? chkbelow) <*> ((hit :) <$> contrm rm)
+          (short block ? chkbelow) <*> ((hit :) <$> contrm)
       | otherwise ->
           -- a block is there but we don't hit it
-          (short block ? chkbelow) <*> contcb cb'
+          (short block ? chkbelow) <*> contcb
     -- no block at the grid cube
-    Nothing -> chkbelow <*> contcb cb'
+    Nothing -> chkbelow <*> contcb
