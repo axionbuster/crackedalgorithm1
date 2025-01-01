@@ -210,34 +210,7 @@ resolve' =
                 -- need to go one step further along the ray
                 [] -> contrm rm
                 -- let's check the block at the grid cube
-                cb : cb' -> do
-                  let checkbelow =
-                        -- go below and check too
-                        getblock (cb & _y -~ 1) <&> \case
-                          Just blockbelow
-                            | Just hitbelow <-
-                                hitting disp myself blockbelow ->
-                                (hitbelow :)
-                          _ -> id
-                      True ? action = action
-                      _ ? _ = pure id
-                      short b = shicorner b ^. _y < 0.5
-                  -- check if the block at the grid cube exists & is solid
-                  -- also just in case a tall block (like a fence)
-                  -- is there, we check the block below it
-                  getblock cb >>= \case
-                    Just block
-                      -- note: ray location and myself location
-                      -- are independent of each other
-                      | Just hit <- hitting disp myself block ->
-                          -- oh, we hit something
-                          (short block ? checkbelow)
-                            <*> ((hit :) <$> contrm rm)
-                      | otherwise ->
-                          -- a block is there but we don't hit it
-                          (short block ? checkbelow) <*> contcb cb'
-                    -- no block at the grid cube
-                    Nothing -> checkbelow <*> contcb cb'
+                cb : cb' -> chkcol cb cb' rm (hitting disp myself) contrm contcb
     case mearliest of
       Nothing ->
         -- no collision, so apply the displacement
@@ -273,3 +246,45 @@ resolve' =
             && (resdis /= zero)
             then cont $ translate respos myself
             else pure
+
+-- internal helper function for 'resolve'
+-- check if i hit a block at the grid cube (and check below for tall blocks)
+chkcol ::
+  (GetBlock s a1 :> ef, Shape s, Fractional a1, Ord a1) =>
+  -- where (block coordinates)
+  V3 Int ->
+  -- remaining grid cubes (block coordinates)
+  t1 ->
+  -- remaining rays
+  t2 ->
+  -- check for hit given block shape (shape has absolute coordinates)
+  (s a1 -> Maybe a2) ->
+  -- continuation for continuing to next ray
+  (t2 -> Eff ef [a2]) ->
+  -- continuation for continuing to next grid cube
+  (t1 -> Eff ef [a2]) ->
+  Eff ef [a2]
+chkcol cb cb' rm chkhit contrm contcb = do
+  let chkbelow =
+        -- go below and check too
+        getblock (cb & _y -~ 1) <&> \case
+          Just blockbelow | Just hitbelow <- chkhit blockbelow -> (hitbelow :)
+          _ -> id
+      True ? action = action
+      _ ? _ = pure id
+      short b = shicorner b ^. _y < 0.5
+  -- check if the block at the grid cube exists & is solid
+  -- also just in case a tall block (like a fence)
+  -- is there, we check the block below it
+  getblock cb >>= \case
+    Just block
+      -- note: ray location and myself location
+      -- are independent of each other
+      | Just hit <- chkhit block ->
+          -- oh, we hit something
+          (short block ? chkbelow) <*> ((hit :) <$> contrm rm)
+      | otherwise ->
+          -- a block is there but we don't hit it
+          (short block ? chkbelow) <*> contcb cb'
+    -- no block at the grid cube
+    Nothing -> chkbelow <*> contcb cb'
