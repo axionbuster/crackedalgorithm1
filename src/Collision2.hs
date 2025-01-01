@@ -198,7 +198,7 @@ resolve' =
             -- grid cubes, are there any blocks?
             March _ _ cubes : rm ->
               cubes & fix \contcb -> \case
-                -- no more grid points, so no
+                -- no more cubes, so no
                 [] -> contrm rm
                 -- let's check the block at the grid point
                 cb : cb' -> do
