@@ -195,12 +195,12 @@ resolve' =
             [] -> pure []
             -- no hit
             March t _ _ : _ | t > 1 -> pure []
-            -- grid cubes, are there any blocks?
+            -- entering (a) grid cube(s), are there any blocks in them?
             March _ _ cubes : rm ->
               cubes & fix \contcb -> \case
-                -- no more cubes, so no
+                -- ran out of grid cubes, so no
                 [] -> contrm rm
-                -- let's check the block at the grid point
+                -- let's check the block at the grid cube
                 cb : cb' -> do
                   let checkbelow =
                         -- go below and check too
@@ -213,7 +213,7 @@ resolve' =
                       True ? action = action
                       _ ? _ = pure id
                       short b = shicorner b ^. _y < 0.5
-                  -- check if the block at the grid point exists & is solid
+                  -- check if the block at the grid cube exists & is solid
                   -- also just in case a tall block (like a fence)
                   -- is there, we check the block below it
                   getblock cb >>= \case
@@ -227,7 +227,7 @@ resolve' =
                       | otherwise ->
                           -- a block is there but we don't hit it
                           (short block ? checkbelow) <*> contcb cb'
-                    -- no block at the grid point
+                    -- no block at the grid cube
                     Nothing -> checkbelow <*> contcb cb'
     case mearliest of
       Nothing ->
