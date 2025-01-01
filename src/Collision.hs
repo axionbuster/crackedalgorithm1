@@ -218,7 +218,7 @@ instance Shape Box where
           )
         -- if any NaNs exist, the box is not intersecting
         -- on some axis, thus the box is not intersecting
-        nonans = all (not . isNaN)
+        nonans = not . any isNaN
         -- entering time, each axis, and t = 0
         times0 = V4 sx0 sy0 sz0 0
         -- exiting time, each axis, and t = 1
@@ -279,7 +279,7 @@ instance (Functor f, Foldable f) => Shape (ManyBoxes f) where
         minimum' =
           Nothing & foldl' \case
             Nothing -> Just
-            Just x -> \y -> Just $ minBy hittime x y
+            Just x -> Just . minBy hittime x
         nearest f = minimum' . mapMaybe f . toList
         firsthit boxes box = nearest (hitting moving box) boxes
      in nearest (firsthit those) these
@@ -304,8 +304,8 @@ instance (Functor f, Foldable f) => Shape (ManyBoxes f) where
 
   -- find the corners of the smallest bounding box
   corners (ManyBoxes boxes) =
-    let low = foldr (liftA2 min . locorner) (pure (1 / 0)) boxes
-        high = foldr (liftA2 max . hicorner) (pure (-1 / 0)) boxes
+    let low = foldl' (flip $ liftA2 min . locorner) (pure (1 / 0)) boxes
+        high = foldl' (flip $ liftA2 max . hicorner) (pure - (1 / 0)) boxes
      in V2 low high
 
   tomanyboxes (ManyBoxes boxes) = ManyBoxes $ toList boxes
