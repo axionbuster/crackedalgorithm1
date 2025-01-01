@@ -199,6 +199,7 @@ resolve' =
             March _ _ cubes : rm ->
               cubes & fix \contcb -> \case
                 -- ran out of grid cubes, so no
+                -- need to go one step further along the ray
                 [] -> contrm rm
                 -- let's check the block at the grid cube
                 cb : cb' -> do
