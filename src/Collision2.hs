@@ -215,7 +215,6 @@ resolve' =
                   chkcol
                     cb
                     (hitting disp myself)
-                    (contrm rm)
                     (contcb cb')
     case mearliest of
       Nothing ->
@@ -261,12 +260,10 @@ chkcol ::
   V3 Int ->
   -- check for hit given block shape (shape has absolute coordinates)
   (s a1 -> Maybe a2) ->
-  -- continuation for continuing to next ray
-  Eff ef [a2] ->
   -- continuation for continuing to next grid cube
   Eff ef [a2] ->
   Eff ef [a2]
-chkcol cb chkhit break continue = do
+chkcol cb chkhit continue = do
   let chkbelow =
         -- go below and check too
         getblock (cb & _y -~ 1) <&> \case
@@ -284,7 +281,7 @@ chkcol cb chkhit break continue = do
       -- are independent of each other
       | Just hit <- chkhit block ->
           -- oh, we hit something
-          (short block ? chkbelow) <*> ((hit :) <$> break)
+          (short block ? chkbelow) <*> ((hit :) <$> continue)
       | otherwise ->
           -- a block is there but we don't hit it
           (short block ? chkbelow) <*> continue
