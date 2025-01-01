@@ -4,7 +4,7 @@ import BlockModel1
 import Collision
 import Collision2
 import Control.Monad.Fix
-import Data.Map.Strict qualified as M
+import Data.Map.Lazy qualified as M
 import Data.Maybe
 import Effectful
 import Face
