@@ -161,7 +161,6 @@ resolve myself disp =
             then pure res0
             else runReader fps . resolve' myself $ res0
         do \(EarlyExit res1) -> pure res1
-{-# INLINE resolve #-}
 
 -- the actual implementation of 'resolve'
 resolve' ::
