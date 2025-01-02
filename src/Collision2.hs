@@ -283,7 +283,8 @@ slowcore res myself =
                     (hitting (resdis res) myself)
                     (contcb cb')
 
--- fast collision detection for small movements (length <= 1 or diagonal x=z=1)
+-- fast collision detection for small movements (length <= 1 or
+-- diagonal |x|=|z|=1)
 -- 
 -- key idea: instead of ray marching, we check potential collision blocks
 -- directly by considering the movement box - the space swept by the object
