@@ -37,7 +37,6 @@ import Data.Functor.Rep
 import Data.Hashable
 import Data.Kind
 import Data.List (nub)
-import Data.Maybe (catMaybes)
 import Data.Ord
 import Data.Traversable
 import Effectful
@@ -239,7 +238,7 @@ resolve' =
           & if or collided
             && not (and collided)
             && (resdis /= zero)
-            then cont $ translate respos myself
+            then cont $ translate delta myself
             else pure
 
 -- slow process ... use ray marching from each face point
@@ -316,24 +315,21 @@ fastcore ::
   Resolve n -> s n -> Eff ef [Hit n]
 fastcore res myself =
   -- note:
-  -- scenter myself ~ bef
   ask @[V3 n]
-    >>= fmap concat <$> traverse \fp ->
+    >>= fmap (concat . concat) <$> traverse \fp ->
       let dis = resdis res
-          bef = slocorner myself + fp
+          bef = fp
           aft = bef + dis
           need = not . nearZero <$> dis
-          hits = for targets \p -> do
-            block <- getblock p
-            pure $ block >>= hitting dis myself
+          hits = for targets \p -> chkcol p (hitting dis myself) (pure [])
             where
               (!) = index
               selposxyz = tabulate . pos
-              targets = fmap floor <$> nub (map selposxyz [0 .. 7 :: Int])
+              targets = nub $ fmap floor <$> map selposxyz [0 .. 7 :: Int]
               pos n i
                 | need ! i && testBit n (V3 0 1 2 ! i) = aft ! i
                 | otherwise = bef ! i
-       in catMaybes <$> hits
+       in hits
 
 -- internal helper function for 'resolve'
 -- check if i hit a block at the grid cube (and check below for tall blocks)

@@ -262,11 +262,11 @@ spec = do
                   && restou m /= NewlyTouchingGround {newonground = LT}
       it "blocks when moving diagonally" do
         let cub = stones [V3 (-1) 0 (-1), V3 0 0 (-2)]
-            zombie = genericzombie (V3 1 0 0)
-            disp = V3 (-1) 0 (-1)
+            zombie = genericzombie (V3 1 0 1)
+            disp = V3 (-2) 0 (-2)
          in run cub (resolve zombie disp)
               `resolveneareq` Resolve
-                { respos = zomtr $ V3 0 0 (-1),
+                { respos = zomtr $ V3 0 0 0,
                   resdis = zero,
                   restou = NewlyTouchingGround {newonground = EQ}
                 }
