@@ -73,9 +73,9 @@ layray ::
 layray n p d f =
   Model $
     M.fromList $
-      take n $
-        fmap (\i -> (i, f i)) $
-          iterate (+ d) p
+      take
+        n
+        ((\i -> (i, f i)) <$> iterate (+ d) p)
 
 layline :: Int -> V3 Int -> V3 Int -> (V3 Int -> Box Double) -> Model Box Double
 layline n p d f =
@@ -85,8 +85,8 @@ layline n p d f =
         M.fromList $
           take n $
             inter
-              (fmap g $ iterate (+ d) p)
-              (fmap g $ iterate (subtract d) p)
+              (g <$> iterate (+ d) p)
+              (g <$> iterate (subtract d) p)
 
 spec :: Spec
 spec = do

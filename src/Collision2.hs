@@ -283,19 +283,19 @@ slowcore res myself =
 
 -- fast collision detection for small movements (length <= 1 or
 -- diagonal |x|=|z|=1)
--- 
+--
 -- key idea: instead of ray marching, we check potential collision blocks
 -- directly by considering the movement box - the space swept by the object
 -- during movement
 --
 -- algorithm:
 --   for each face point of the moving object:
---     1. find start (bef) and end (aft) positions 
+--     1. find start (bef) and end (aft) positions
 --     2. generate test points at corners of movement box:
 --        - movement box is the space between bef and aft positions
 --        - use binary counting (0-7) to pick coordinates:
 --          * bit 0 = x: choose between bef.x (0) or aft.x (1)
---          * bit 1 = y: choose between bef.y (0) or aft.y (1) 
+--          * bit 1 = y: choose between bef.y (0) or aft.y (1)
 --          * bit 2 = z: choose between bef.z (0) or aft.z (1)
 --        - skip coordinates where movement is negligible
 --     3. for each test point:
@@ -305,7 +305,7 @@ slowcore res myself =
 --
 -- example: moving +X+Y (need = <True,True,False>)
 --   we only check 4 corners instead of 8 since Z movement = 0:
---   * 000 -> (bef.x, bef.y, bef.z)  
+--   * 000 -> (bef.x, bef.y, bef.z)
 --   * 001 -> (aft.x, bef.y, bef.z)
 --   * 010 -> (bef.x, aft.y, bef.z)
 --   * 011 -> (aft.x, aft.y, bef.z)
