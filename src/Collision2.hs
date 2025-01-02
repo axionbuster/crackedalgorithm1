@@ -29,12 +29,15 @@ import Collision
 import Control.Lens hiding (index)
 import Control.Monad
 import Control.Monad.Fix
+import Data.Bits
 import Data.Coerce
 import Data.Data
 import Data.Foldable
 import Data.Functor.Rep
 import Data.Hashable
 import Data.Kind
+import Data.List (nub)
+import Data.Maybe (catMaybes)
 import Data.Ord
 import Data.Traversable
 import Effectful
@@ -197,37 +200,7 @@ resolve' =
         _ -> pure ()
     -- compute the times ("hits") at which the object will hit a block
     -- and then find the earliest hit
-    mearliest <-
-      minimum_ . concat <$> for fps \fp ->
-        -- shoot ray starting at 'fp' & break at first hit & move on to
-        -- next fp. note: ray-box collision is NOT what's happening here;
-        -- instead each time a ray enters a grid cube, we get the location
-        -- of the cube, and we are checking if the cube is occupied.
-        -- ray can pass through one cube through its face, two through an
-        -- edge (not parallel to an axial plane), and three at a time
-        -- through a corner (same restrictions). the operation is ill-
-        -- defined right now if it travels on an axial plane or along
-        -- an edge, but something will be returned so we can inspect it
-        -- (also inspect the cube fp is in)
-        (March 0 undefined [floor <$> fp] : march fp disp) & fix \contrm ->
-          \case
-            -- some improper displacements can cause termination
-            -- of ray marching (which should normally be infinite)
-            [] -> pure []
-            -- no hit
-            March t _ _ : _ | t > 1 -> pure []
-            -- entering (a) grid cube(s), are there any blocks in them?
-            March _ _ cubes : rm ->
-              cubes & fix \contcb -> \case
-                -- ran out of grid cubes, so no
-                -- need to go one step further along the ray
-                [] -> contrm rm
-                -- let's check the block at the grid cube
-                cb : cb' ->
-                  chkcol
-                    cb
-                    (hitting disp myself)
-                    (contcb cb')
+    mearliest <- minimum_ <$> slowcore resolution myself
     case mearliest of
       Nothing ->
         -- no collision, so apply the displacement
@@ -263,6 +236,69 @@ resolve' =
             && (resdis /= zero)
             then cont $ translate respos myself
             else pure
+
+slowcore ::
+  forall s n ef.
+  (Shape s, Epsilon n, RealFloat n, GetBlock s n :> ef, Reader [V3 n] :> ef) =>
+  Resolve n -> s n -> Eff ef [Hit n]
+slowcore res myself =
+  ask @[V3 n] >>= \fps ->
+    concat <$> for fps \fp ->
+      -- shoot ray starting at 'fp' & break at first hit & move on to
+      -- next fp. note: ray-box collision is NOT what's happening here;
+      -- instead each time a ray enters a grid cube, we get the location
+      -- of the cube, and we are checking if the cube is occupied.
+      -- ray can pass through one cube through its face, two through an
+      -- edge (not parallel to an axial plane), and three at a time
+      -- through a corner (same restrictions). the operation is ill-
+      -- defined right now if it travels on an axial plane or along
+      -- an edge, but something will be returned so we can inspect it
+      -- (also inspect the cube fp is in)
+      (March 0 undefined [floor <$> fp] : march fp (resdis res)) & fix \contrm ->
+        \case
+          -- some improper displacements can cause termination
+          -- of ray marching (which should normally be infinite)
+          [] -> pure []
+          -- no hit
+          March t _ _ : _ | t > 1 -> pure []
+          -- entering (a) grid cube(s), are there any blocks in them?
+          March _ _ cubes : rm ->
+            cubes & fix \contcb -> \case
+              -- ran out of grid cubes, so no
+              -- need to go one step further along the ray
+              [] -> contrm rm
+              -- let's check the block at the grid cube
+              cb : cb' ->
+                chkcol
+                  cb
+                  (hitting (resdis res) myself)
+                  (contcb cb')
+
+fastcore ::
+  forall s n ef.
+  (Shape s, RealFloat n, Epsilon n, GetBlock s n :> ef, Reader [V3 n] :> ef) =>
+  Resolve n -> s n -> Eff ef [Hit n]
+fastcore res myself = do
+  -- note:
+  -- scenter myself ~ bef
+  ask @[V3 n]
+    >>= fmap concat <$> traverse \fp -> do
+      let dis = resdis res
+          bef = respos res - sdimensions myself ^/ 2 + fp
+          aft = bef + dis
+          nee = not . nearZero <$> dis
+          power =
+            catMaybes
+              <$> sequenceA
+                [ getblock p <&> maybe Nothing (hitting dis myself)
+                | p <- fmap floor <$> (nub $ map f [0 .. 7 :: Int])
+                ]
+            where
+              (!) = index
+              bts = V3 0 1 2
+              f n = tabulate @V3 \i ->
+                if testBit n (bts ! i) && nee ! i then aft ! i else bef ! i
+       in power
 
 -- internal helper function for 'resolve'
 -- check if i hit a block at the grid cube (and check below for tall blocks)
