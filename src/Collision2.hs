@@ -278,27 +278,25 @@ fastcore ::
   forall s n ef.
   (Shape s, RealFloat n, Epsilon n, GetBlock s n :> ef, Reader [V3 n] :> ef) =>
   Resolve n -> s n -> Eff ef [Hit n]
-fastcore res myself = do
+fastcore res myself =
   -- note:
   -- scenter myself ~ bef
   ask @[V3 n]
-    >>= fmap concat <$> traverse \fp -> do
+    >>= fmap concat <$> traverse \fp ->
       let dis = resdis res
           bef = slocorner myself + fp
           aft = bef + dis
           nee = not . nearZero <$> dis
-          power =
-            catMaybes
-              <$> sequenceA
-                [ getblock p <&> maybe Nothing (hitting dis myself)
-                | p <- fmap floor <$> (nub $ map f [0 .. 7 :: Int])
-                ]
-            where
-              (!) = index
-              bts = V3 0 1 2
-              f n = tabulate @V3 \i ->
-                if testBit n (bts ! i) && nee ! i then aft ! i else bef ! i
-       in power
+       in catMaybes
+            <$> sequenceA
+              [ getblock p <&> maybe Nothing (hitting dis myself)
+              | p <- fmap floor <$> (nub $ map f [0 .. 7 :: Int])
+              ]
+          where
+            (!) = index
+            bts = V3 0 1 2
+            f n = tabulate @V3 \i ->
+              if testBit n (bts ! i) && nee ! i then aft ! i else bef ! i
 
 -- internal helper function for 'resolve'
 -- check if i hit a block at the grid cube (and check below for tall blocks)
