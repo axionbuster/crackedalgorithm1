@@ -284,7 +284,7 @@ fastcore res myself = do
   ask @[V3 n]
     >>= fmap concat <$> traverse \fp -> do
       let dis = resdis res
-          bef = respos res - sdimensions myself ^/ 2 + fp
+          bef = slocorner myself + fp
           aft = bef + dis
           nee = not . nearZero <$> dis
           power =
