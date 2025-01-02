@@ -40,6 +40,7 @@ import Data.Traversable
 import Effectful
 import Effectful.Dispatch.Dynamic
 import Effectful.Exception
+import Effectful.Reader.Static
 import Face
 import GHC.Generics (Generic)
 import Linear
@@ -146,15 +147,30 @@ resolve ::
   Eff ef (Resolve n)
 resolve myself disp =
   let res0 = Resolve (scenter myself) disp (NewlyTouchingGround EQ)
+      fps =
+        fmap ((slocorner myself +) . fmap fromIntegral) do
+          facepoints
+            (ceiling <$> sdimensions myself)
+            (round . signum <$> disp)
    in catch
-        do res0 & if nearZero disp then pure else resolve' myself
+        do
+          if nearZero disp
+            then pure res0
+            else runReader fps . resolve' myself $ res0
         do \(EarlyExit res1) -> pure res1
 {-# INLINE resolve #-}
 
 -- the actual implementation of 'resolve'
 resolve' ::
   forall s n ef.
-  (Shape s, RealFloat n, Epsilon n, Typeable n, GetBlock s n :> ef) =>
+  ( Shape s,
+    RealFloat n,
+    Epsilon n,
+    Typeable n,
+    GetBlock s n :> ef,
+    -- face points
+    Reader [V3 n] :> ef
+  ) =>
   s n ->
   Resolve n ->
   Eff ef (Resolve n)
@@ -166,13 +182,9 @@ resolve' =
     -- we will grid march along the rays (of the displacement) shot
     -- from these points
     let disp = resdis resolution
-        fps =
-          fmap ((slocorner myself +) . fmap fromIntegral) do
-            facepoints
-              (ceiling <$> sdimensions myself)
-              (round . signum <$> disp)
         minimum_ [] = Nothing
         minimum_ xs = Just $ minimumBy (comparing hittime) xs
+    fps <- ask @[V3 n] -- retrieve the face points
     -- if i'm currently in contact with something, i can freely
     -- move in the direction of the displacement, as part of the
     -- game physics; this is so i can unstuck myself out
