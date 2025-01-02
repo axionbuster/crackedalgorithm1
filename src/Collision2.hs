@@ -254,25 +254,26 @@ slowcore res myself =
       -- defined right now if it travels on an axial plane or along
       -- an edge, but something will be returned so we can inspect it
       -- (also inspect the cube fp is in)
-      (March 0 undefined [floor <$> fp] : march fp (resdis res)) & fix \contrm ->
-        \case
-          -- some improper displacements can cause termination
-          -- of ray marching (which should normally be infinite)
-          [] -> pure []
-          -- no hit
-          March t _ _ : _ | t > 1 -> pure []
-          -- entering (a) grid cube(s), are there any blocks in them?
-          March _ _ cubes : rm ->
-            cubes & fix \contcb -> \case
-              -- ran out of grid cubes, so no
-              -- need to go one step further along the ray
-              [] -> contrm rm
-              -- let's check the block at the grid cube
-              cb : cb' ->
-                chkcol
-                  cb
-                  (hitting (resdis res) myself)
-                  (contcb cb')
+      (March 0 undefined [floor <$> fp] : march fp (resdis res))
+        & fix \contrm ->
+          \case
+            -- some improper displacements can cause termination
+            -- of ray marching (which should normally be infinite)
+            [] -> pure []
+            -- no hit
+            March t _ _ : _ | t > 1 -> pure []
+            -- entering (a) grid cube(s), are there any blocks in them?
+            March _ _ cubes : rm ->
+              cubes & fix \contcb -> \case
+                -- ran out of grid cubes, so no
+                -- need to go one step further along the ray
+                [] -> contrm rm
+                -- let's check the block at the grid cube
+                cb : cb' ->
+                  chkcol
+                    cb
+                    (hitting (resdis res) myself)
+                    (contcb cb')
 
 fastcore ::
   forall s n ef.
@@ -292,11 +293,11 @@ fastcore res myself =
               [ getblock p <&> maybe Nothing (hitting dis myself)
               | p <- fmap floor <$> (nub $ map f [0 .. 7 :: Int])
               ]
-          where
-            (!) = index
-            bts = V3 0 1 2
-            f n = tabulate @V3 \i ->
-              if testBit n (bts ! i) && nee ! i then aft ! i else bef ! i
+  where
+    (!) = index
+    bts = V3 0 1 2
+    f n = tabulate @V3 \i ->
+      if testBit n (bts ! i) && nee ! i then aft ! i else bef ! i
 
 -- internal helper function for 'resolve'
 -- check if i hit a block at the grid cube (and check below for tall blocks)
