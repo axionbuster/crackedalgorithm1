@@ -187,6 +187,12 @@ resolve' =
     let disp = resdis resolution
         minimum_ [] = Nothing
         minimum_ xs = Just $ minimumBy (comparing hittime) xs
+        gofast =
+          quadrance disp <= 1
+            || (abs (disp ^. _x) == 1 && abs (disp ^. _z) == 1)
+        core
+          | gofast = fastcore
+          | otherwise = slowcore
     fps <- ask @[V3 n] -- retrieve the face points
     -- if i'm currently in contact with something, i can freely
     -- move in the direction of the displacement, as part of the
@@ -200,7 +206,7 @@ resolve' =
         _ -> pure ()
     -- compute the times ("hits") at which the object will hit a block
     -- and then find the earliest hit
-    mearliest <- minimum_ <$> slowcore resolution myself
+    mearliest <- minimum_ <$> core resolution myself
     case mearliest of
       Nothing ->
         -- no collision, so apply the displacement
@@ -237,6 +243,8 @@ resolve' =
             then cont $ translate respos myself
             else pure
 
+-- slow process ... use ray marching from each face point
+-- collect all hits found from all rays
 slowcore ::
   forall s n ef.
   (Shape s, Epsilon n, RealFloat n, GetBlock s n :> ef, Reader [V3 n] :> ef) =>
@@ -275,6 +283,33 @@ slowcore res myself =
                     (hitting (resdis res) myself)
                     (contcb cb')
 
+-- fast collision detection for small movements (length <= 1 or diagonal x=z=1)
+-- 
+-- key idea: instead of ray marching, we check potential collision blocks
+-- directly by considering the movement box - the space swept by the object
+-- during movement
+--
+-- algorithm:
+--   for each face point of the moving object:
+--     1. find start (bef) and end (aft) positions 
+--     2. generate test points at corners of movement box:
+--        - movement box is the space between bef and aft positions
+--        - use binary counting (0-7) to pick coordinates:
+--          * bit 0 = x: choose between bef.x (0) or aft.x (1)
+--          * bit 1 = y: choose between bef.y (0) or aft.y (1) 
+--          * bit 2 = z: choose between bef.z (0) or aft.z (1)
+--        - skip coordinates where movement is negligible
+--     3. for each test point:
+--        - get block at that position
+--        - test if moving object would hit that block
+--        - collect all hits found
+--
+-- example: moving +X+Y (need = <True,True,False>)
+--   we only check 4 corners instead of 8 since Z movement = 0:
+--   * 000 -> (bef.x, bef.y, bef.z)  
+--   * 001 -> (aft.x, bef.y, bef.z)
+--   * 010 -> (bef.x, aft.y, bef.z)
+--   * 011 -> (aft.x, aft.y, bef.z)
 fastcore ::
   forall s n ef.
   (Shape s, RealFloat n, Epsilon n, GetBlock s n :> ef, Reader [V3 n] :> ef) =>
@@ -287,19 +322,18 @@ fastcore res myself =
       let dis = resdis res
           bef = slocorner myself + fp
           aft = bef + dis
-          nee = not . nearZero <$> dis
-          out =
-            catMaybes
-              <$> sequenceA
-                [ getblock p <&> maybe Nothing (hitting dis myself)
-                | p <- fmap floor <$> (nub $ map f [0 .. 7 :: Int])
-                ]
+          need = not . nearZero <$> dis
+          hits = for targets \p -> do
+            block <- getblock p
+            pure $ block >>= hitting dis myself
             where
               (!) = index
-              bts = V3 0 1 2
-              f n = tabulate @V3 \i ->
-                if testBit n (bts ! i) && nee ! i then aft ! i else bef ! i
-       in out
+              selposxyz = tabulate . pos
+              targets = fmap floor <$> nub (map selposxyz [0 .. 7 :: Int])
+              pos n i
+                | need ! i && testBit n (V3 0 1 2 ! i) = aft ! i
+                | otherwise = bef ! i
+       in catMaybes <$> hits
 
 -- internal helper function for 'resolve'
 -- check if i hit a block at the grid cube (and check below for tall blocks)
