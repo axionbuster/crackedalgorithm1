@@ -186,8 +186,13 @@ resolve' =
         minimum_ [] = Nothing
         minimum_ xs = Just $ minimumBy (comparing hittime) xs
         gofast =
+          -- if the assumptions of the fast core algorithm are met,
+          -- yeah, apply the fast core algorithm
           quadrance disp <= 1
-            || (abs (disp ^. _x) == 1 && abs (disp ^. _z) == 1)
+            || ( abs (disp ^. _x) == 1
+                   && abs (disp ^. _z) == 1
+                   && abs (disp ^. _y) <= 1
+               )
         core
           | gofast = fastcore
           | otherwise = slowcore
@@ -205,6 +210,7 @@ resolve' =
     -- compute the times ("hits") at which the object will hit a block
     -- and then find the earliest hit
     mearliest <- minimum_ <$> core resolution myself
+    -- feed back (or stop)
     case mearliest of
       Nothing ->
         -- no collision, so apply the displacement
@@ -250,16 +256,22 @@ slowcore ::
 slowcore res myself =
   ask @[V3 n] >>= \fps ->
     concat <$> for fps \fp ->
-      -- shoot ray starting at 'fp' & break at first hit & move on to
-      -- next fp. note: ray-box collision is NOT what's happening here;
-      -- instead each time a ray enters a grid cube, we get the location
-      -- of the cube, and we are checking if the cube is occupied.
-      -- ray can pass through one cube through its face, two through an
-      -- edge (not parallel to an axial plane), and three at a time
-      -- through a corner (same restrictions). the operation is ill-
-      -- defined right now if it travels on an axial plane or along
-      -- an edge, but something will be returned so we can inspect it
-      -- (also inspect the cube fp is in)
+      -- ray marching algorithm:
+      --   1. shoot ray from each face point (fp)
+      --   2. track ray's path through grid cubes
+      --   3. stop at first hit or when ray length > displacement
+      --
+      -- grid traversal details:
+      --   - ray can enter multiple cubes simultaneously:
+      --     * 1 cube: through face
+      --     * 2 cubes: through edge (if not parallel to axis)
+      --     * 3 cubes: through corner
+      --   - cubes are checked in order of entry
+      --   - early exit on first collision
+      --
+      -- note: behavior unspecified when ray travels exactly
+      -- along grid edge or plane, but will return something
+      -- for sake of completeness
       (March 0 undefined [floor <$> fp] : march fp (resdis res))
         & fix \contrm ->
           \case
@@ -311,11 +323,10 @@ slowcore res myself =
 --   * 011 -> (aft.x, aft.y, bef.z)
 fastcore ::
   forall s n ef.
-  (Shape s, RealFloat n, Epsilon n, GetBlock s n :> ef, Reader [V3 n] :> ef) =>
+  (Shape s, Epsilon n, RealFloat n, GetBlock s n :> ef, Reader [V3 n] :> ef) =>
   Resolve n -> s n -> Eff ef [Hit n]
 fastcore res myself =
-  -- note:
-  ask @[V3 n]
+  ask @[V3 n] -- face points (fp)
     >>= fmap (concat . concat) <$> traverse \fp ->
       let dis = resdis res
           bef = fp
