@@ -266,7 +266,7 @@ slowcore res myself =
       --     * 1 cube: through face
       --     * 2 cubes: through edge (if not parallel to axis)
       --     * 3 cubes: through corner
-      --   - cubes are checked in order of entry
+      --   - cubes are checked for collision
       --   - early exit on first collision
       --
       -- note: behavior unspecified when ray travels exactly
